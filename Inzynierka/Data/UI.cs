@@ -121,7 +121,7 @@ namespace ElectricData
             mouseY = screenHeightGlobal - mouseY;
             if (mouseY < top*screenHeightGlobal && mouseY > bottom * screenHeightGlobal )
                 { 
-                    Console.WriteLine(mouseY);
+                    //Console.WriteLine(mouseY);
 
                     if (mouseX< 0.1f *screenWidthGlobal ) 
                     {
@@ -133,7 +133,7 @@ namespace ElectricData
                     tick(1);
                     return 1;
                 } 
-                    else Console.WriteLine(mouseX + "+" + (left +  0.2f) *screenWidthGlobal);
+                   // else Console.WriteLine(mouseX + "+" + (left +  0.2f) *screenWidthGlobal);
                 }
             
             return -1;

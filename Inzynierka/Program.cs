@@ -11,14 +11,13 @@ public static class Program
     public static float screenHeightGlobal = 1000;
     static void Main ()
     {
-        ObjectList objects = new ObjectList();
+        ObjectList objects =  ObjectList.getInstance();
         ConnectionList connections = new ConnectionList();
         AnimationList animations = new AnimationList();
         UIList uis = new UIList();
         objects.addObject(0, 100,100);
         objects.addObject(0, 5,50);
         objects.addObject(1, 200,100);
-        objects.addObject(1, 200,50);
         TextureTest window = new TextureTest("Papierosik",(int)screenWidthGlobal , (int)screenHeightGlobal, objects,connections,animations, uis);
         window.uruchom();
 

@@ -11,15 +11,14 @@ namespace ElectricData
         
         List<ElectricObject> listaObiektow = new List<ElectricObject>();
         Dictionary <int, Tuple<float,float>> objectCoordsMap = new Dictionary<int, Tuple<float, float>>();
-        public ObjectList instance;
-        public ObjectList getInstance ()
+        private static  ObjectList instance;
+        public static ObjectList getInstance ()
         {
             if (instance == null)
             {
                 instance = new ObjectList();
-                return instance;
             }
-            else return instance;
+            return instance;
         }
 
 
@@ -137,6 +136,10 @@ namespace ElectricData
                 listaObiektow.Add(b);
                 b = null;
                 break;
+                case 3:
+                Node c = new Node(x,y);
+                listaObiektow.Add(c);
+                break;
                 default: return;
             }
             objectCoordsMap[listaObiektow.Count()-1] = new Tuple<float, float>(listaObiektow[listaObiektow.Count()-1].X, listaObiektow[listaObiektow.Count()-1].Y);
@@ -152,11 +155,25 @@ namespace ElectricData
              y = screenHeightGlobal - y;
              if (x< item.Item1 +50)
                 {
-                    Console.WriteLine("Jest po lewej stronie." + x + "A to koordynaty przedmiotu:" + item.Item1);
+                   // Console.WriteLine("Jest po lewej stronie." + x + "A to koordynaty przedmiotu:" + item.Item1);
                     return true;
                 }
-               Console.WriteLine("Jest po prawej stronie." + x + "A to koordynaty przedmiotu:" + item.Item1);
+              // Console.WriteLine("Jest po prawej stronie." + x + "A to koordynaty przedmiotu:" + item.Item1);
              return false;
+        }
+        public int getLenght()
+        {
+            for (int i=0; i<listaObiektow.Count(); i++)
+            {
+               // Console.WriteLine(listaObiektow[i].imageLink + " " + listaObiektow[i].objectID );
+            }
+            return listaObiektow.Count();
+        }
+
+        public bool  isObjectNode (int id)
+        {
+            if (listaObiektow[id].imageLink== 23) return true;
+            else return false;
         }
     }
 }
