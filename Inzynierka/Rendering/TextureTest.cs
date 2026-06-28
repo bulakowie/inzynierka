@@ -16,13 +16,15 @@ namespace Render
     
     public class TextureTest
     {
-        public TextureTest(string windowTitle, int windowWidth, int windowHeight, ObjectList objects, ConnectionList connections)
+        public TextureTest(string windowTitle, int windowWidth, int windowHeight, ObjectList objects, ConnectionList connections, AnimationList animations, UIList uis)
         {
             this.windowTitle = windowTitle;
             this.windowWidth = windowWidth;
             this.windowHeight = windowHeight;
             this.objects = objects;
             this.connections = connections;
+            this.animations = animations;
+            this.uis = uis;
         }
 
        protected string windowTitle {get;set;}
@@ -32,12 +34,20 @@ namespace Render
         protected ObjectList objects;
         protected ConnectionList connections;
 
+        protected AnimationList animations;
+        protected UIList uis;
+
+
         private GameWindowSettings defaultUstawienia = GameWindowSettings.Default;
         private NativeWindowSettings natynweUstawienia = NativeWindowSettings.Default;
 
 
         private float[] _vertices;
+        private float[] _vertices1 ;
+        private float[] _vertices2; 
+        private float[] _vertices3;
 
+        private float[] _vertices4;
         private uint[] _indices;
 
         private Texture2D _texture;
@@ -47,7 +57,8 @@ namespace Render
         private int _vertexBufferObject;
 
         private int _elementBufferObject;
-
+        private bool left_or_right_start;
+        private bool left_or_right_stop;
         private int _vertexArrayObject;
 
 
@@ -57,7 +68,7 @@ namespace Render
         }
         public void uruchom ()
         {
-            _vertices = objects.renderVertices().Concat(connections.renderVertices()).ToArray();
+            _vertices = objects.renderVertices().Concat(connections.renderVertices(objects,mode)).ToArray();
             _indices = objects.renderIndices(_vertices.Count());
             natynweUstawienia.Size = new Vector2i(windowWidth, windowHeight);
             natynweUstawienia.Title = windowTitle;
@@ -110,17 +121,19 @@ namespace Render
             out vec4 color;
             in vec2 texCoord;
             in float aIndex;
-            uniform sampler2D u_Texture[3];
+            uniform sampler2D u_Texture[24];
             void main() 
             {
             int index = int(aIndex);
              color = texture(u_Texture[index], texCoord);
             }";
 
+           
             int vertexShaderId = GL.CreateShader(ShaderType.VertexShaderArb);
             GL.ShaderSource(vertexShaderId, vertexShader);
 
             GL.CompileShader(vertexShaderId);
+            
 
             GL.GetShader(vertexShaderId, ShaderParameter.CompileStatus, out var vertexShaderCompilation);
 
@@ -184,25 +197,76 @@ namespace Render
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
             GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
 
-            int[] samplers = new int[4] {3,2,1,0};
+            int[] samplers = new int[24] {23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0};
             var textureSampleUniformLocation = GetUniformLocation("u_Texture[0]");
             GL.UseProgram(_shaderHandle);
-            GL.Uniform1(textureSampleUniformLocation, 4, samplers);
-            
-            ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/wire.png");
-            ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/Cell.png");
-            ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/Resistor.png");
-            ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/blank.png");
+            GL.Uniform1(textureSampleUniformLocation, 24, samplers);
 
+
+        //23
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/node.png");
+        //22 - 19
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/resistor_button/resistor_button4.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/resistor_button/resistor_button3.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/resistor_button/resistor_button2.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/resistor_button/resistor_button1.png");
+
+        //18 - 10
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button9.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button8.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button7.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button6.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button5.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button4.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button3.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button2.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button1.png");
+
+
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation6.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation5.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation4.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation3.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation2.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation1.png");
+
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/wire.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/Cell.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/Resistor.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/blank.png");
+
+
+            GL.Enable(EnableCap.Blend);
+GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         }
         int ret = -1;
         int mode; //0 is dragging object, 1 is dragging wire
+        
         public void update (GameTime gametime, GameWindow gameWindow)
         {
-            
             var mouse = gameWindow.MouseState;
-            _vertices = objects.renderVertices();
+             _vertices1 = objects.renderVertices();
+             _vertices2 = connections.renderVertices(objects,mode);
+             _vertices3 = animations.renderVertices(objects);
+             _vertices4 = uis.renderVertices();
 
+             _vertices = new float[_vertices1.Length +_vertices2.Length + _vertices3.Length + _vertices4.Length];
+            Array.Copy(_vertices2, 0 ,_vertices, 0,  _vertices2.Length);
+            Array.Copy(_vertices1, 0 ,_vertices, _vertices2.Length,  _vertices1.Length);
+            Array.Copy(_vertices3, 0 ,_vertices, _vertices1.Length+ _vertices2.Length,  _vertices3.Length);
+            Array.Copy(_vertices4, 0 ,_vertices, _vertices1.Length+ _vertices2.Length + _vertices3.Length,  _vertices4.Length);
+
+
+             _indices = objects.renderIndices(_vertices.Count());
+
+
+            if(uis.isAbove(mouse.X, mouse.Y) >= 0)
+            {
+                if (mouse.IsButtonPressed(MouseButton.Left))
+                {
+                    objects.addObject(uis.isAbove(mouse.X, mouse.Y),500,500);
+                }
+            }
             //Jesli trzyma coś cały czas to:
             if (mouse.IsButtonDown(MouseButton.Left) && ret >=0)
             {
@@ -211,7 +275,7 @@ namespace Render
             }
             else if (mouse.IsButtonDown(MouseButton.Right) && ret >=0)
             {
-                connections.mouseDragWire(ret, mouse.X, mouse.Y);
+                connections.mouseDragWire(ret, mouse.X, mouse.Y, left_or_right_start, left_or_right_stop);
                 mode = 1;
             }
            //pierwsze nacisniecie:
@@ -222,19 +286,28 @@ namespace Render
             else if (mouse.IsButtonDown(MouseButton.Right) )
             {
                 ret = objects.gotObjectPressed(mouse.X, mouse.Y);
+                if (ret>=0) 
+                {
+                    left_or_right_start = objects.isLeft( mouse.X, mouse.Y,ret);
+                    animations.addInsertAnimation(ret,left_or_right_start);
+                }
+
             } 
             //jesli nie trzyma nic to:
             else 
             {
+                animations.killInsertAnimation(ret);
                 ret = -1;
                 if (mode == 1)
                 {
-                    connections.mouseDragWire(objects.gotObjectPressed(mouse.X, mouse.Y), mouse.X, mouse.Y);
+                    left_or_right_stop = objects.isLeft(mouse.X, mouse.Y, objects.gotObjectPressed(mouse.X, mouse.Y));
+                    connections.mouseDragWire(objects.gotObjectPressed(mouse.X, mouse.Y), mouse.X, mouse.Y, left_or_right_start, left_or_right_stop);
                 }
                 mode = 0;
                 return;
             }
-            
+
+             
             
         }
         public void render(GameTime gametime)
@@ -244,10 +317,13 @@ namespace Render
             GL.UseProgram(_shaderHandle);
             GL.BindVertexArray(_vertexArrayObject);
            // GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-           _vertices = objects.renderVertices();
-           GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-           GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, _vertices.Length * sizeof(float), _vertices);
-           GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+
+            GL.BufferData(BufferTarget.ArrayBuffer,_vertices.Length * sizeof(float),_vertices, BufferUsageHint.DynamicDraw);          
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
+
+            GL.BufferData(BufferTarget.ElementArrayBuffer,_indices.Length * sizeof(uint), _indices,BufferUsageHint.DynamicDraw);
+            GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
         }
 
         public int GetUniformLocation(string uniformName) => _uniforms[uniformName];

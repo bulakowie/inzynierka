@@ -13,11 +13,13 @@ public static class Program
     {
         ObjectList objects = new ObjectList();
         ConnectionList connections = new ConnectionList();
+        AnimationList animations = new AnimationList();
+        UIList uis = new UIList();
         objects.addObject(0, 100,100);
         objects.addObject(0, 5,50);
-        objects.addObject(1, 0,0);
-        objects.addObject(1, 10,30);
-        TextureTest window = new TextureTest("Papierosik",(int)screenWidthGlobal , (int)screenHeightGlobal, objects,connections);
+        objects.addObject(1, 200,100);
+        objects.addObject(1, 200,50);
+        TextureTest window = new TextureTest("Papierosik",(int)screenWidthGlobal , (int)screenHeightGlobal, objects,connections,animations, uis);
         window.uruchom();
 
     }

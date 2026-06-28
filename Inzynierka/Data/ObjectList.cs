@@ -10,6 +10,7 @@ namespace ElectricData
     {
         
         List<ElectricObject> listaObiektow = new List<ElectricObject>();
+        Dictionary <int, Tuple<float,float>> objectCoordsMap = new Dictionary<int, Tuple<float, float>>();
         public ObjectList instance;
         public ObjectList getInstance ()
         {
@@ -24,7 +25,7 @@ namespace ElectricData
 
         public float[] renderVertices()
         {
-            float[] vertices = new float[(listaObiektow.Count() + 1) * 24];
+            float[] vertices = new float[(listaObiektow.Count()) * 24];
             float screenHeight = screenHeightGlobal;
             float
              screenWidth = screenWidthGlobal;
@@ -33,48 +34,12 @@ namespace ElectricData
             float y_coords;
             float box_size = 0.2f;
             float textureId;
-
-            float top = 1.0f;
-            float bottom = 0.8f;
-            float left = -1.0f;
-            float right = 1.0f;
-
-
-            vertices[0] = right;
-            vertices[1] = top;
-            vertices[2] = 0;
-            vertices[3] = 1;
-            vertices[4] = 1;
-            vertices[5] = 0;
-
-            vertices[6] = right;
-            vertices[7] = bottom;
-            vertices[8] = 0;
-            vertices[9] = 1;
-            vertices[10] = 0;
-            vertices[11] = 0;
-
-            vertices[12] = left;
-            vertices[13] = bottom;
-            vertices[14] = 0;
-            vertices[15] = 0;
-            vertices[16] = 0;
-            vertices[17] = 0;
-
-            vertices[18] = left;
-            vertices[19] = top;
-            vertices[20] = 0;
-            vertices[21] = 0;
-            vertices[22] = 1;
-            vertices[23] = 0;
-
-
-            for (int i = 1; i < listaObiektow.Count() + 1; i++)
+            for (int i = 0; i < listaObiektow.Count(); i++)
             {
-                int j = i - 1;
+                int j = i;
                 textureId = listaObiektow[j].imageLink;
-                x_coords = listaObiektow[j].X;
-                y_coords = listaObiektow[j].Y;
+                x_coords = objectCoordsMap[j].Item1;
+                y_coords = objectCoordsMap[j].Item2;
                 x_coords -= (screenWidth / 2);
                 y_coords -= (screenHeight / 2);
 
@@ -115,8 +80,8 @@ namespace ElectricData
 
         public uint[] renderIndices (int size)
         {
-            uint [] indices = new uint [size * 6];
-            for (int i=0; i< listaObiektow.Count()+1; i++)
+            uint [] indices = new uint [size/24 * 6];
+            for (int i=0; i< size/24; i++)
             {
                 indices[i*6] = (uint) (int)i*4;
                 indices[i*6+1] = (uint) (int)i*4+1;
@@ -134,26 +99,27 @@ namespace ElectricData
 
         public void changeValueInObject(int objectId)
         {
-            listaObiektow[objectId].X += 0.1f;
+            //listaObiektow[objectId].X += 0.1f;
         }
 
         public void mouseDragObject (int objectId, float mouseX, float mouseY)
         {
             float proportion = screenWidthGlobal / screenHeightGlobal;
-            listaObiektow[objectId].X = Math.Clamp(mouseX, 0, screenWidthGlobal - 100 );
-            listaObiektow[objectId].Y = Math.Clamp( screenHeightGlobal - mouseY,0,screenHeightGlobal - 100 );
+            objectCoordsMap[objectId] = new Tuple<float,float>(Math.Clamp(mouseX, 0, screenWidthGlobal - 100 ),Math.Clamp( screenHeightGlobal - mouseY,0,screenHeightGlobal - 100 ));
 
         }
         public int gotObjectPressed (float mouseX, float mouseY)
         {
             mouseY = screenHeightGlobal - mouseY;
-            for (int i=0; i< listaObiektow.Count(); i++)
+            foreach(var item in objectCoordsMap)
             {
-                if (listaObiektow[i].X < mouseX && listaObiektow[i].X > mouseX - 100 && listaObiektow[i].Y  < mouseY && listaObiektow[i].Y > mouseY - 100)
+                //NAPRAWIC: przy zmianie rozmiaru nie wychwytuje elementow
+                if (item.Value.Item1 < mouseX && item.Value.Item1 > mouseX - 100 && item.Value.Item2  < mouseY && item.Value.Item2 > mouseY - 100)
                 {
-                    return i;
+                    return item.Key;
                 }
             }
+
             return -1;
         }
 
@@ -171,8 +137,26 @@ namespace ElectricData
                 listaObiektow.Add(b);
                 b = null;
                 break;
+                default: return;
             }
+            objectCoordsMap[listaObiektow.Count()-1] = new Tuple<float, float>(listaObiektow[listaObiektow.Count()-1].X, listaObiektow[listaObiektow.Count()-1].Y);
         }
-        
+        public Tuple <float,float> returnObjectCoords(int a)
+        {
+            return objectCoordsMap[a];
+        }
+        public bool isLeft(float x, float y, int objectId)
+        {
+            if (objectId < 0) return false;
+            var item = objectCoordsMap[objectId];
+             y = screenHeightGlobal - y;
+             if (x< item.Item1 +50)
+                {
+                    Console.WriteLine("Jest po lewej stronie." + x + "A to koordynaty przedmiotu:" + item.Item1);
+                    return true;
+                }
+               Console.WriteLine("Jest po prawej stronie." + x + "A to koordynaty przedmiotu:" + item.Item1);
+             return false;
+        }
     }
 }

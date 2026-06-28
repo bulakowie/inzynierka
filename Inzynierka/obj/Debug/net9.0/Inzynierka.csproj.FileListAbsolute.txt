@@ -34,3 +34,4 @@ C:\Users\Koza\Documents\inzynierka\Inzynierka\bin\Debug\net9.0\System.Drawing.Co
 C:\Users\Koza\Documents\inzynierka\Inzynierka\bin\Debug\net9.0\System.Private.Windows.Core.dll
 C:\Users\Koza\Documents\inzynierka\Inzynierka\bin\Debug\net9.0\System.Private.Windows.GdiPlus.dll
 C:\Users\Koza\Documents\inzynierka\Inzynierka\bin\Debug\net9.0\runtimes\win\lib\net9.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\Koza\Documents\inzynierka\Inzynierka\obj\Debug\net9.0\Inzynierka.sourcelink.json
