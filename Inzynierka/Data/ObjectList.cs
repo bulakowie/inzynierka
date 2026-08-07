@@ -20,6 +20,10 @@ namespace ElectricData
             }
             return instance;
         }
+        public List<ElectricObject> returnLista()
+        {
+            return listaObiektow;
+        }
 
 
         public float[] renderVertices()
@@ -28,49 +32,61 @@ namespace ElectricData
             float screenHeight = screenHeightGlobal;
             float
              screenWidth = screenWidthGlobal;
-            float proportion = screenWidthGlobal / screenHeightGlobal;
             float x_coords;
             float y_coords;
-            float box_size = 0.2f;
+           
             float textureId;
             for (int i = 0; i < listaObiektow.Count(); i++)
             {
                 int j = i;
-                textureId = listaObiektow[j].imageLink;
+                float problem = listaObiektow[j].imageLink%100;
+
+                textureId = (listaObiektow[j].imageLink - problem) / 100;
+                float textureX, textureY;
+                textureY = (problem - problem%10)/100;
+                
+                textureX = (problem%10)/10;
                 x_coords = objectCoordsMap[j].Item1;
                 y_coords = objectCoordsMap[j].Item2;
                 x_coords -= (screenWidth / 2);
                 y_coords -= (screenHeight / 2);
+                float box_size = 0.2f;
+                float proportion = screenWidthGlobal / screenHeightGlobal;
 
                 x_coords /= (screenWidth / 2);
                 y_coords /= (screenHeight / 2);
+                
+                if (isObjectNode(i))
+                {
+                    box_size = 0.1f;
+                }
 
                 vertices[24 * i] = x_coords + box_size / proportion;
                 vertices[24 * i + 1] = y_coords + box_size;
                 vertices[24 * i + 2] = 0;
-                vertices[24 * i + 3] = 1;
-                vertices[24 * i + 4] = 1;
+                vertices[24 * i + 3] = textureX + 0.1f;
+                vertices[24 * i + 4] = textureY + 0.1f;
                 vertices[24 * i + 5] = textureId;
 
                 vertices[24 * i + 6] = x_coords + box_size / proportion;
                 vertices[24 * i + 7] = y_coords;
                 vertices[24 * i + 8] = 0;
-                vertices[24 * i + 9] = 1;
-                vertices[24 * i + 10] = 0;
+                vertices[24 * i + 9] = textureX + 0.1f;
+                vertices[24 * i + 10] = textureY;
                 vertices[24 * i + 11] = textureId;
 
                 vertices[24 * i + 12] = x_coords;
                 vertices[24 * i + 13] = y_coords;
                 vertices[24 * i + 14] = 0;
-                vertices[24 * i + 15] = 0;
-                vertices[24 * i + 16] = 0;
+                vertices[24 * i + 15] = textureX;
+                vertices[24 * i + 16] = textureY;
                 vertices[24 * i + 17] = textureId;
 
                 vertices[24 * i + 18] = x_coords;
                 vertices[24 * i + 19] = y_coords + box_size;
                 vertices[24 * i + 20] = 0;
-                vertices[24 * i + 21] = 0;
-                vertices[24 * i + 22] = 1;
+                vertices[24 * i + 21] = textureX;
+                vertices[24 * i + 22] = textureY + 0.1f;
                 vertices[24 * i + 23] = textureId;
             }
             return vertices;
@@ -140,6 +156,11 @@ namespace ElectricData
                 Node c = new Node(x,y);
                 listaObiektow.Add(c);
                 break;
+                case 4:
+                ACSource d= new ACSource(x,y);
+                listaObiektow.Add(d);
+                break;
+
                 default: return;
             }
             objectCoordsMap[listaObiektow.Count()-1] = new Tuple<float, float>(listaObiektow[listaObiektow.Count()-1].X, listaObiektow[listaObiektow.Count()-1].Y);

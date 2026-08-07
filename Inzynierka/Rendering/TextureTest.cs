@@ -121,7 +121,7 @@ namespace Render
             out vec4 color;
             in vec2 texCoord;
             in float aIndex;
-            uniform sampler2D u_Texture[24];
+            uniform sampler2D u_Texture[1];
             void main() 
             {
             int index = int(aIndex);
@@ -197,43 +197,13 @@ namespace Render
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
             GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
 
-            int[] samplers = new int[24] {23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0};
+            int[] samplers = new int[1]{0};
             var textureSampleUniformLocation = GetUniformLocation("u_Texture[0]");
             GL.UseProgram(_shaderHandle);
-            GL.Uniform1(textureSampleUniformLocation, 24, samplers);
+            GL.Uniform1(textureSampleUniformLocation, 1, samplers);
 
 
-        //23
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/node.png");
-        //22 - 19
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/resistor_button/resistor_button4.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/resistor_button/resistor_button3.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/resistor_button/resistor_button2.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/resistor_button/resistor_button1.png");
-
-        //18 - 10
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button9.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button8.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button7.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button6.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button5.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button4.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button3.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button2.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/cell_button/cell_button1.png");
-
-
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation6.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation5.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation4.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation3.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation2.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/insert_animation/insert_animation1.png");
-
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/wire.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/Cell.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/Resistor.png");
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/blank.png");
+        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/spritesheet1.png");
 
 
             GL.Enable(EnableCap.Blend);
@@ -259,12 +229,12 @@ GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
              _indices = objects.renderIndices(_vertices.Count());
 
-
             if(uis.isAbove(mouse.X, mouse.Y) >= 0)
             {
                 if (mouse.IsButtonPressed(MouseButton.Left))
                 {
                     objects.addObject(uis.isAbove(mouse.X, mouse.Y),500,500);
+                    connections.isCircuitClosed(objects);
                 }
             }
             //Jesli trzyma coś cały czas to:
@@ -302,8 +272,11 @@ GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 {
                     left_or_right_stop = objects.isLeft(mouse.X, mouse.Y, objects.gotObjectPressed(mouse.X, mouse.Y));
                     connections.mouseDragWire(objects.gotObjectPressed(mouse.X, mouse.Y), mouse.X, mouse.Y, left_or_right_start, left_or_right_stop);
+                    connections.isCircuitClosed(objects);
+
                 }
                 mode = 0;
+
                 return;
             }
 

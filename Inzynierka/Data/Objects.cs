@@ -8,22 +8,26 @@ namespace ElectricData
     public abstract class UIElement
     {
         public int elementID {get; set;}
-        public int imageLink {get; set;}
+        public List<int> frames {get; set;}
+        public int imageLink {get;set;}
+        public int iterator {get;set;}
+
     }
     public class ButtonCreateElement : UIElement
     {
         public int whatElement {get;set;}
-        public int tickLimit {get; set;}
         public int startingImage {get; set;}
-        public ButtonCreateElement (int a, int image, int frame)
+        public ButtonCreateElement (int a, List<int> l)
         {
+           
             elementID = 0;
             whatElement = a;
-            imageLink = image;
-            tickLimit = frame;
-            startingImage = image;
+            frames = l;
+            imageLink = frames[0];
+            iterator = 0;
         }
     }
+    
 
     public abstract class Animation
     {
@@ -40,17 +44,28 @@ namespace ElectricData
         public InsertAnimation (bool isLeft, int objectId)
         {
             animationId = 0;
-            animationFrames =  new List<int>{4,5,6,7,8,9};
+            animationFrames =  new List<int>{66,67,68,69,50,51};
             isRepeat = false;
             currentFrame = 0;
             this.isLeft = isLeft;
             this.objectId = objectId;
         }
     }
+    public class ProperFaceElement : Animation
+    {
+        public List<int> animationFrames2;
+
+        public ProperFaceElement ()
+        {
+            animationId = 1;
+            animationFrames2 = new List<int>{52,53,54};
+            animationFrames = new List<int>{55,56,57,58,59,40,41,42};
+        }
+    }
     public class ButtonAnimation : Animation
     {
         public int buttonId {get;set;}
-        public ButtonAnimation (bool isLeft, int buttonId)
+        public ButtonAnimation (bool isLeft, int buttonId, List<int> l)
         {
             animationId = 1;
             animationFrames =  new List<int>{4,5,6,7,8,9};
@@ -59,6 +74,7 @@ namespace ElectricData
             this.buttonId = buttonId;
         }
     }
+    
 
     public class Wire
     {
@@ -92,7 +108,7 @@ namespace ElectricData
         {
             X = x;
             Y = y;
-            imageLink = 1;
+            imageLink = 97;
         }
     }
     public class Cell : ElectricObject
@@ -102,7 +118,17 @@ namespace ElectricData
         {
             X = x;
             Y = y;
-            imageLink = 2;
+            imageLink = 92;
+        }
+    }
+     public class ACSource : ElectricObject
+    {
+        public double voltage { get; set; }
+        public ACSource (float x, float y)
+        {
+            X = x;
+            Y = y;
+            imageLink = 94;
         }
     }
     public class Node : ElectricObject
@@ -111,7 +137,7 @@ namespace ElectricData
         {
             X = x;
             Y = y;
-            imageLink = 23;
+            imageLink = 96;
         }
     }
 
