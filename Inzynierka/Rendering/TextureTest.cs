@@ -11,11 +11,13 @@ using System.Runtime.InteropServices;
 using ElectricData;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 namespace Render
 {
-    
+
     public class TextureTest
     {
+        private StringBuilder _inputText = new StringBuilder();
         public TextureTest(string windowTitle, int windowWidth, int windowHeight, ObjectList objects, ConnectionList connections, AnimationList animations, UIList uis)
         {
             this.windowTitle = windowTitle;
@@ -27,9 +29,9 @@ namespace Render
             this.uis = uis;
         }
 
-       protected string windowTitle {get;set;}
-        protected int windowWidth {get;set;}
-        protected  int windowHeight {get;set;}
+        protected string windowTitle { get; set; }
+        protected int windowWidth { get; set; }
+        protected int windowHeight { get; set; }
 
         protected ObjectList objects;
         protected ConnectionList connections;
@@ -43,15 +45,17 @@ namespace Render
 
 
         private float[] _vertices;
-        private float[] _vertices1 ;
-        private float[] _vertices2; 
+        private float[] _vertices1;
+        private float[] _vertices2;
         private float[] _vertices3;
 
         private float[] _vertices4;
+
+        private float[] _vertices5;
         private uint[] _indices;
 
         private Texture2D _texture;
-        private readonly IDictionary<string,int> _uniforms = new Dictionary<string,int>();
+        private readonly IDictionary<string, int> _uniforms = new Dictionary<string, int>();
 
         private int _shaderHandle;
         private int _vertexBufferObject;
@@ -62,24 +66,25 @@ namespace Render
         private int _vertexArrayObject;
 
 
-        public void calculateIndices (int objects_number)
+        public void calculateIndices(int objects_number)
         {
-            
+
         }
-        public void uruchom ()
+        public void uruchom()
         {
-            _vertices = objects.renderVertices().Concat(connections.renderVertices(objects,mode)).ToArray();
+            _vertices = objects.renderVertices().Concat(connections.renderVertices(objects, mode)).ToArray();
             _indices = objects.renderIndices(_vertices.Count());
             natynweUstawienia.Size = new Vector2i(windowWidth, windowHeight);
             natynweUstawienia.Title = windowTitle;
             GameTime gametime = new GameTime();
-            using GameWindow gameWindow = new GameWindow(defaultUstawienia, natynweUstawienia );
+            using GameWindow gameWindow = new GameWindow(defaultUstawienia, natynweUstawienia);
+            gameWindow.TextInput += OnTextInput;
             gameWindow.Resize += (ResizeEventArgs e) =>
         {
             GL.Viewport(0, 0, e.Width, e.Height);
 
-                Program.changeScreenSize(e.Width, e.Height);
-};
+            Program.changeScreenSize(e.Width, e.Height);
+        };
 
             gameWindow.Load += load;
             gameWindow.UpdateFrame += (FrameEventArgs eventArgs) =>
@@ -98,9 +103,9 @@ namespace Render
         }
         public void init()
         {
-            
+
         }
-        public void load ()
+        public void load()
         {
             string vertexShader = @"
             #version 330 core
@@ -121,19 +126,19 @@ namespace Render
             out vec4 color;
             in vec2 texCoord;
             in float aIndex;
-            uniform sampler2D u_Texture[1];
+            uniform sampler2D u_Texture[2];
             void main() 
             {
             int index = int(aIndex);
              color = texture(u_Texture[index], texCoord);
             }";
 
-           
+
             int vertexShaderId = GL.CreateShader(ShaderType.VertexShaderArb);
             GL.ShaderSource(vertexShaderId, vertexShader);
 
             GL.CompileShader(vertexShaderId);
-            
+
 
             GL.GetShader(vertexShaderId, ShaderParameter.CompileStatus, out var vertexShaderCompilation);
 
@@ -146,7 +151,7 @@ namespace Render
 
             GL.ShaderSource(fragmentShaderId, fragmentShader);
             GL.CompileShader(fragmentShaderId);
-            GL.GetShader(fragmentShaderId, ShaderParameter.CompileStatus,out var fragmentShaderCompilation);
+            GL.GetShader(fragmentShaderId, ShaderParameter.CompileStatus, out var fragmentShaderCompilation);
 
             if (fragmentShaderCompilation != (int)All.True)
             {
@@ -159,31 +164,31 @@ namespace Render
             GL.AttachShader(_shaderHandle, fragmentShaderId);
             GL.LinkProgram(_shaderHandle);
 
-             GL.DetachShader(_shaderHandle, vertexShaderId);
+            GL.DetachShader(_shaderHandle, vertexShaderId);
             GL.DetachShader(_shaderHandle, fragmentShaderId);
 
             GL.DeleteShader(vertexShaderId);
             GL.DeleteShader(fragmentShaderId);
-            
+
             GL.GetProgram(_shaderHandle, GetProgramParameterName.ActiveUniforms, out var totalUniforms);
-            for (int i=0; i< totalUniforms; i++)
+            for (int i = 0; i < totalUniforms; i++)
             {
-                string key = GL.GetActiveUniform(_shaderHandle, i ,out _, out _);
+                string key = GL.GetActiveUniform(_shaderHandle, i, out _, out _);
                 int location = GL.GetUniformLocation(_shaderHandle, key);
-                _uniforms.Add(key,location);
+                _uniforms.Add(key, location);
             }
 
 
 
             _vertexBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float),  _vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
 
             _vertexArrayObject = GL.GenVertexArray();
             GL.BindVertexArray(_vertexArrayObject);
 
-            GL.VertexAttribPointer(0,3, VertexAttribPointerType.Float, false, sizeof(float) * 6,0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, sizeof(float) * 6, 0);
             GL.EnableVertexAttribArray(0);
 
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
@@ -197,74 +202,87 @@ namespace Render
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
             GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
 
-            int[] samplers = new int[1]{0};
+            int[] samplers = new int[2] { 1, 0 };
             var textureSampleUniformLocation = GetUniformLocation("u_Texture[0]");
             GL.UseProgram(_shaderHandle);
-            GL.Uniform1(textureSampleUniformLocation, 1, samplers);
+            GL.Uniform1(textureSampleUniformLocation, 2, samplers);
 
-
-        ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/spritesheet1.png");
+            ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/font-sample.png");
+            ResourceManager.Instance.LoadTexture("C:/Users/Koza/Documents/inzynierka/Inzynierka/sprites/spritesheet1.png");
 
 
             GL.Enable(EnableCap.Blend);
-GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+
         }
         int ret = -1;
         int mode; //0 is dragging object, 1 is dragging wire
-        
-        public void update (GameTime gametime, GameWindow gameWindow)
+
+        public void update(GameTime gametime, GameWindow gameWindow)
         {
             var mouse = gameWindow.MouseState;
-             _vertices1 = objects.renderVertices();
-             _vertices2 = connections.renderVertices(objects,mode);
-             _vertices3 = animations.renderVertices(objects);
-             _vertices4 = uis.renderVertices();
+            var keyboard = gameWindow.KeyboardState;
+           
 
-             _vertices = new float[_vertices1.Length +_vertices2.Length + _vertices3.Length + _vertices4.Length];
-            Array.Copy(_vertices2, 0 ,_vertices, 0,  _vertices2.Length);
-            Array.Copy(_vertices1, 0 ,_vertices, _vertices2.Length,  _vertices1.Length);
-            Array.Copy(_vertices3, 0 ,_vertices, _vertices1.Length+ _vertices2.Length,  _vertices3.Length);
-            Array.Copy(_vertices4, 0 ,_vertices, _vertices1.Length+ _vertices2.Length + _vertices3.Length,  _vertices4.Length);
+            if (_inputText.Length > 0)
+            {
+                List<Tuple<float,float>>  piotr = TextManager.LetterToSpriteCoords(_inputText.ToString());
+               _vertices5 =  TextManager.renderVertices(piotr);
+            }
+            else _vertices5 = [];
+            
+            _vertices1 = objects.renderVertices();
+            _vertices2 = connections.renderVertices(objects, mode);
+            _vertices3 = animations.renderVertices(objects);
+            _vertices4 = uis.renderVertices();
+
+            _vertices = new float[_vertices1.Length + _vertices2.Length + _vertices3.Length + _vertices4.Length + _vertices5.Length];
+            Array.Copy(_vertices2, 0, _vertices, 0, _vertices2.Length);
+            Array.Copy(_vertices1, 0, _vertices, _vertices2.Length, _vertices1.Length);
+            Array.Copy(_vertices3, 0, _vertices, _vertices1.Length + _vertices2.Length, _vertices3.Length);
+            Array.Copy(_vertices4, 0, _vertices, _vertices1.Length + _vertices2.Length + _vertices3.Length, _vertices4.Length);
+            Array.Copy(_vertices5, 0, _vertices, _vertices1.Length + _vertices2.Length + _vertices3.Length + _vertices4.Length, _vertices5.Length);
 
 
-             _indices = objects.renderIndices(_vertices.Count());
 
-            if(uis.isAbove(mouse.X, mouse.Y) >= 0)
+            _indices = objects.renderIndices(_vertices.Count());
+            if (uis.isAbove(mouse.X, mouse.Y) >= 0)
             {
                 if (mouse.IsButtonPressed(MouseButton.Left))
                 {
-                    objects.addObject(uis.isAbove(mouse.X, mouse.Y),500,500);
+                    objects.addObject(uis.isAbove(mouse.X, mouse.Y), 500, 500);
                     connections.isCircuitClosed(objects);
                 }
             }
             //Jesli trzyma coś cały czas to:
-            if (mouse.IsButtonDown(MouseButton.Left) && ret >=0)
+            if (mouse.IsButtonDown(MouseButton.Left) && ret >= 0)
             {
                 objects.mouseDragObject(ret, mouse.X, mouse.Y);
                 mode = 0;
             }
-            else if (mouse.IsButtonDown(MouseButton.Right) && ret >=0)
+            else if (mouse.IsButtonDown(MouseButton.Right) && ret >= 0)
             {
                 connections.mouseDragWire(ret, mouse.X, mouse.Y, left_or_right_start, left_or_right_stop);
                 mode = 1;
             }
-           //pierwsze nacisniecie:
+            //pierwsze nacisniecie:
             else if (mouse.IsButtonPressed(MouseButton.Left))
             {
                 ret = objects.gotObjectPressed(mouse.X, mouse.Y);
             }
-            else if (mouse.IsButtonDown(MouseButton.Right) )
+            else if (mouse.IsButtonDown(MouseButton.Right))
             {
                 ret = objects.gotObjectPressed(mouse.X, mouse.Y);
-                if (ret>=0) 
+                if (ret >= 0)
                 {
-                    left_or_right_start = objects.isLeft( mouse.X, mouse.Y,ret);
-                    animations.addInsertAnimation(ret,left_or_right_start);
+                    left_or_right_start = objects.isLeft(mouse.X, mouse.Y, ret);
+                    animations.addInsertAnimation(ret, left_or_right_start);
                 }
 
-            } 
+            }
             //jesli nie trzyma nic to:
-            else 
+            else
             {
                 animations.killInsertAnimation(ret);
                 ret = -1;
@@ -280,26 +298,32 @@ GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 return;
             }
 
-             
-            
+
+
         }
         public void render(GameTime gametime)
         {
-             GL.ClearColor(Color4.Chocolate);
+            GL.ClearColor(Color4.Chocolate);
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.UseProgram(_shaderHandle);
             GL.BindVertexArray(_vertexArrayObject);
-           // GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            // GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
 
-            GL.BufferData(BufferTarget.ArrayBuffer,_vertices.Length * sizeof(float),_vertices, BufferUsageHint.DynamicDraw);          
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.DynamicDraw);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
 
-            GL.BufferData(BufferTarget.ElementArrayBuffer,_indices.Length * sizeof(uint), _indices,BufferUsageHint.DynamicDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.DynamicDraw);
             GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
         }
 
         public int GetUniformLocation(string uniformName) => _uniforms[uniformName];
+
+
+        void OnTextInput(TextInputEventArgs e)
+        {
+            _inputText.Append(e.AsString);
+        }
     }
-    
+
 }
