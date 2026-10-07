@@ -5,6 +5,11 @@ using OpenTK.Mathematics;
 
 namespace ElectricData
 {
+   public enum objectValues
+   {
+            Resistance,
+            Voltage
+    } 
     public abstract class UIElement
     {
         public int elementID {get; set;}
@@ -93,6 +98,9 @@ namespace ElectricData
 
     public abstract class ElectricObject
     {
+
+        public string objectName {get;set;}
+        public List<Tuple<objectValues,double>> objectValues_list;
         public int objectID {get;set;}
         public float X { get; set; }
         public float Y { get; set; }
@@ -102,23 +110,28 @@ namespace ElectricData
 
     public class Resistor : ElectricObject
     {
-        public double resistance { get; set; }
-
         public Resistor (float x, float y)
         {
+            objectName = "Resistor";
             X = x;
             Y = y;
             imageLink = 97;
+            objectValues_list = new List<Tuple<objectValues, double>>();
+            objectValues_list.Add(new Tuple<objectValues, double>(objectValues.Resistance,0));
+            objectValues_list.Add(new Tuple<objectValues, double>(objectValues.Voltage,23));
+
         }
     }
     public class Cell : ElectricObject
     {
-        public double voltage { get; set; }
         public Cell (float x, float y)
         {
+            objectName = "Cell";
             X = x;
             Y = y;
             imageLink = 92;
+            objectValues_list = new List<Tuple<objectValues, double>>();
+            objectValues_list.Add(new Tuple<objectValues, double>(objectValues.Voltage,0));
         }
     }
      public class ACSource : ElectricObject
@@ -126,6 +139,7 @@ namespace ElectricData
         public double voltage { get; set; }
         public ACSource (float x, float y)
         {
+            objectName = "ACsource";
             X = x;
             Y = y;
             imageLink = 94;

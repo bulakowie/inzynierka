@@ -18,6 +18,7 @@ namespace Render
     public class TextureTest
     {
         private StringBuilder _inputText = new StringBuilder();
+        private string g =""; 
         public TextureTest(string windowTitle, int windowWidth, int windowHeight, ObjectList objects, ConnectionList connections, AnimationList animations, UIList uis)
         {
             this.windowTitle = windowTitle;
@@ -37,6 +38,9 @@ namespace Render
         protected ConnectionList connections;
 
         protected AnimationList animations;
+        protected MainRenderer mainRenderer = new MainRenderer();
+
+        protected TextManager textManager = new TextManager();
         protected UIList uis;
 
 
@@ -72,8 +76,10 @@ namespace Render
         }
         public void uruchom()
         {
-            _vertices = objects.renderVertices().Concat(connections.renderVertices(objects, mode)).ToArray();
-            _indices = objects.renderIndices(_vertices.Count());
+            RenderDataCollector renderDataCollector = new RenderDataCollector();
+             _vertices = new float[3];
+
+            _indices = new uint[3];
             natynweUstawienia.Size = new Vector2i(windowWidth, windowHeight);
             natynweUstawienia.Title = windowTitle;
             GameTime gametime = new GameTime();
@@ -217,6 +223,8 @@ namespace Render
 
         }
         int ret = -1;
+            int ret2 = -1;
+
         int mode; //0 is dragging object, 1 is dragging wire
 
         public void update(GameTime gametime, GameWindow gameWindow)
@@ -224,29 +232,29 @@ namespace Render
             var mouse = gameWindow.MouseState;
             var keyboard = gameWindow.KeyboardState;
            
-
-            if (_inputText.Length > 0)
-            {
-                List<Tuple<float,float>>  piotr = TextManager.LetterToSpriteCoords(_inputText.ToString());
-               _vertices5 =  TextManager.renderVertices(piotr);
-            }
-            else _vertices5 = [];
+            RenderDataCollector renderDataCollector = new RenderDataCollector();
             
-            _vertices1 = objects.renderVertices();
-            _vertices2 = connections.renderVertices(objects, mode);
-            _vertices3 = animations.renderVertices(objects);
-            _vertices4 = uis.renderVertices();
+            textManager.writingObjectData(ret2);
+            if (1 == textManager.react(readSymbolKeyboard(keyboard),ret2)) ret2 = -1;
+            if (_inputText.Length >0) textManager.receiveInputText(_inputText);
+            _inputText.Clear();
+                       
+            objects.renderVertices(renderDataCollector);
+            connections.renderVertices(renderDataCollector);
+            animations.renderVertices(renderDataCollector);
+            uis.renderVertices(renderDataCollector);
+             textManager.renderVertices(renderDataCollector);
 
-            _vertices = new float[_vertices1.Length + _vertices2.Length + _vertices3.Length + _vertices4.Length + _vertices5.Length];
-            Array.Copy(_vertices2, 0, _vertices, 0, _vertices2.Length);
-            Array.Copy(_vertices1, 0, _vertices, _vertices2.Length, _vertices1.Length);
-            Array.Copy(_vertices3, 0, _vertices, _vertices1.Length + _vertices2.Length, _vertices3.Length);
-            Array.Copy(_vertices4, 0, _vertices, _vertices1.Length + _vertices2.Length + _vertices3.Length, _vertices4.Length);
-            Array.Copy(_vertices5, 0, _vertices, _vertices1.Length + _vertices2.Length + _vertices3.Length + _vertices4.Length, _vertices5.Length);
+            _vertices = mainRenderer.renderVertices(renderDataCollector);
 
-
-
-            _indices = objects.renderIndices(_vertices.Count());
+            _indices = mainRenderer.renderIndices(renderDataCollector);
+            
+            if (keyboard.IsKeyPressed(Keys.Delete))
+            {
+                ret = objects.gotObjectPressed(mouse.X, mouse.Y);
+                connections.KillTheObject(ret);
+                objects.KillTheObject(ret);
+            }
             if (uis.isAbove(mouse.X, mouse.Y) >= 0)
             {
                 if (mouse.IsButtonPressed(MouseButton.Left))
@@ -281,6 +289,10 @@ namespace Render
                 }
 
             }
+            else if (mouse.IsButtonDown(MouseButton.Middle))
+            {
+                ret2 = objects.gotObjectPressed(mouse.X, mouse.Y);
+            }
             //jesli nie trzyma nic to:
             else
             {
@@ -298,8 +310,7 @@ namespace Render
                 return;
             }
 
-
-
+            
         }
         public void render(GameTime gametime)
         {
@@ -319,10 +330,20 @@ namespace Render
 
         public int GetUniformLocation(string uniformName) => _uniforms[uniformName];
 
-
         void OnTextInput(TextInputEventArgs e)
         {
             _inputText.Append(e.AsString);
+        }
+        int readSymbolKeyboard (KeyboardState keyboard)
+        {
+           if (keyboard.IsAnyKeyDown)
+            {
+                if (keyboard.IsKeyDown(Keys.Backspace)) return 0;
+                if (keyboard.IsKeyDown(Keys.Enter)) return 1;
+                if (keyboard.IsKeyDown(Keys.Down)) return 2;
+                if (keyboard.IsKeyDown(Keys.Up)) return 3;
+            }
+    return -1;
         }
     }
 

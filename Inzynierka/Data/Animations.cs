@@ -25,13 +25,13 @@ namespace ElectricData
             else return instance;
         }
         
-   public float[] renderVertices(ObjectList obj)
+   public void renderVertices(RenderDataCollector dataCollector)
         {
+            ObjectList obj = ObjectList.getInstance();
             float problem;
-            float[] vertices = new float[(listaAnimacji.Count()) * 24];
             float screenHeight = screenHeightGlobal;
             float screenWidth = screenWidthGlobal;
-            float box_size = 0.1f;
+            float box_size = 0.05f;
             float proportion = screenWidthGlobal / screenHeightGlobal;
             Tuple <float,float> coords1 = new Tuple<float, float>(1f,1f);
             Tuple <float,float> coords2 = new Tuple<float, float>(1f,1f);
@@ -118,36 +118,10 @@ namespace ElectricData
 
                // if (listaAnimacji[i].isSecondObjectLeft) coords2  = new Tuple <float,float>(coords2.Item1 - 0.5f * box_size, coords2.Item2 + box_size/(2*proportion));
                // else coords2  = new Tuple <float,float>(coords2.Item1  + 1.5f*box_size/proportion, coords2.Item2  + box_size/(2*proportion));
+                 dataCollector.addRenderData(textureId, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1, coords1.Item2, coords2.Item1, coords2.Item2 );
 
-                vertices[24 * i] = coords2.Item1 ;
-                vertices[24 * i + 1] = coords2.Item2 ;        
-                vertices[24 * i + 2] = 0;
-                vertices[24 * i + 3] = textureX + 0.1f;
-                vertices[24 * i + 4] = textureY + 0.1f;
-                vertices[24 * i + 5] = 0;
-
-                vertices[24 * i + 6] = coords2.Item1;
-                vertices[24 * i + 7] = coords1.Item2;
-                vertices[24 * i + 8] = 0;                       
-                vertices[24 * i + 9] = textureX + 0.1f;
-                vertices[24 * i + 10] = textureY;
-                vertices[24 * i + 11] = 0;
-
-                vertices[24 * i + 12] = coords1.Item1;
-                vertices[24 * i + 13] = coords1.Item2;
-                vertices[24 * i + 14] = 0;
-                vertices[24 * i + 15] = textureX;
-                vertices[24 * i + 16] = textureY;
-                vertices[24 * i + 17] = 0;
-
-                vertices[24 * i + 18] = coords1.Item1;
-                vertices[24 * i + 19] = coords2.Item2;
-                vertices[24 * i + 20] = 0;
-                vertices[24 * i + 21] = textureX;
-                vertices[24 * i + 22] = textureY + 0.1f;
-                vertices[24 * i + 23] = 0;
             }
-            return vertices;
 
         }
    

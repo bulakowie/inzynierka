@@ -31,85 +31,222 @@ namespace ElectricData
         }
 
         //renderowanie kabli, musimy sciagnac dane na temat polozenia elementow a nbastepnie rozciagnac ten kabel tak by wygladalo to dobrze //bog mi swiadkiem co mnie podkusilo by pisac w C#
-        public float[] renderVertices(ObjectList obj, int mode)
+        public void renderVertices(RenderDataCollector dataCollector)
         {
-            float[] vertices = new float[(listaPrzewodow.Count()) * 24];
+            ObjectList obj = ObjectList.getInstance();
             float screenHeight = screenHeightGlobal;
             float screenWidth = screenWidthGlobal;
             float box_size = 0.1f;
             float proportion = screenWidthGlobal / screenHeightGlobal;
             Tuple<float, float> coords1;
             Tuple<float, float> coords2;
+            Tuple<float, float> coords3;
+            Tuple<float, float> coords4;
+
             float textureId = 0;
 
             for (int i = 0; i < listaPrzewodow.Count(); i++)
             {
-                coords1 = obj.returnObjectCoords(listaPrzewodow[i].secondObject);
-                coords2 = obj.returnObjectCoords(listaPrzewodow[i].firstObject);
+                //Musze odnalezc wszystkie algorytmy do generowania kabla.
+                //1. klasyczny, jeśli ten po LEWEJ (czyli mniejszykoordynat x) jest skierowany w prawo kabel i ten po PRAWEJ jest w lewo
+                //  Wtedy wyciagamy kabel z obu i pewnym punkcjie łączymy je pionową linią
+                //2. Odwrotny, jeśli jeden lub dwa kable wymagają zawrócenia, czyli są skeirowane w przeciwną stronę niż ich partenr
+                //wtedy trzeba kabel wyprowadzic, przeciaganc w gore lub w doł, zawrócić, znowu góre lub w dół i połączyć
+                //
+                
+                
+                int a = 2;
+                bool c1_isLeft, c2_isLeft;
+                float textureX = 0.8f;
+                float textureY = 0.9f;
+                if (obj.returnObjectCoords(listaPrzewodow[i].secondObject).Item1 < obj.returnObjectCoords(listaPrzewodow[i].firstObject).Item1)
+                {
+                   // Console.WriteLine("SWAP");
+                    coords1 = obj.returnObjectCoords(listaPrzewodow[i].secondObject);
+                    coords2 = obj.returnObjectCoords(listaPrzewodow[i].firstObject);
+                    c1_isLeft =listaPrzewodow[i].isSecondObjectLeft;
+                    c2_isLeft =listaPrzewodow[i].isFirstObjectLeft;
+
+                    textureY = 1f;
+                }
+                else
+                {
+                    coords1 = obj.returnObjectCoords(listaPrzewodow[i].firstObject);
+                    coords2 = obj.returnObjectCoords(listaPrzewodow[i].secondObject);
+                    c1_isLeft =listaPrzewodow[i].isFirstObjectLeft;
+                    c2_isLeft =listaPrzewodow[i].isSecondObjectLeft;
+                    
+                }
+
 
                 coords1 = new Tuple<float, float>(coords1.Item1 - (screenWidth / 2), coords1.Item2 - (screenHeight / 2));
                 coords2 = new Tuple<float, float>(coords2.Item1 - (screenWidth / 2), coords2.Item2 - (screenHeight / 2));
 
                 coords1 = new Tuple<float, float>(coords1.Item1 / (screenWidth / 2), coords1.Item2 / (screenHeight / 2));
-                coords2 = new Tuple<float, float>(coords2.Item1 / (screenWidth / 2), coords2.Item2 / (screenHeight / 2) + box_size / proportion);
-                float textureX = 0.8f;
-                float textureY = 0.9f;
+                coords2 = new Tuple<float, float>(coords2.Item1 / (screenWidth / 2), coords2.Item2 / (screenHeight / 2));
+
+               if (!c1_isLeft && c2_isLeft) a = 1;
+               else if (c1_isLeft && c2_isLeft )a = 2;
+               else if (!c1_isLeft && !c2_isLeft )a = 3;
+                else if (c1_isLeft && !c2_isLeft) a = 4;
+               else a = 0;
+                switch (a)
+                {
+                    case 1:
+                    //jesli odleglosc miedzy nimi jest wieksza niz 1 box, ORAZ drugi przedmiot patrzy w naszą stronę
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 + box_size / proportion, coords1.Item2,
+                coords1.Item1 + 2* box_size / proportion, coords1.Item2 +2* box_size / proportion);
+
+                if (coords1.Item2 < coords2.Item2)
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 + box_size / proportion, coords1.Item2,
+                coords1.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);
+                else
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 + box_size / proportion, coords1.Item2,
+                coords1.Item1 + 2* box_size / proportion, coords2.Item2 );
 
 
-                if (!listaPrzewodow[i].isSecondObjectLeft && !obj.isObjectNode(listaPrzewodow[i].secondObject)) coords1 = new Tuple<float, float>(coords1.Item1 + 1.5f * box_size, coords1.Item2 + box_size);
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 + 2* box_size / proportion, coords2.Item2,
+                coords2.Item1, coords2.Item2 +2* box_size / proportion);
+                break;
 
-                if (!listaPrzewodow[i].isFirstObjectLeft && !obj.isObjectNode(listaPrzewodow[i].firstObject)) coords2 = new Tuple<float, float>(coords2.Item1 + 1.5f * box_size, coords2.Item2 + box_size);
+                    case 2:
+                    //jesli my jestesmy odwroceni od rugeigo obiektu plecami
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion, coords1.Item2,
+                coords1.Item1 , coords1.Item2 +2* box_size / proportion);
 
+                if (coords1.Item2 < coords2.Item2)
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion, coords1.Item2,
+                coords1.Item1, coords2.Item2 +2* box_size / proportion);
+                else
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion, coords1.Item2,
+                coords1.Item1 , coords2.Item2 );
 
-                vertices[24 * i] = coords2.Item1;
-                vertices[24 * i + 1] = coords2.Item2;
-                vertices[24 * i + 2] = 0;
-                vertices[24 * i + 3] = textureX + 0.1f;
-                vertices[24 * i + 4] = textureY + 0.1f;
-                vertices[24 * i + 5] = textureId;
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1, coords2.Item2,
+                coords2.Item1, coords2.Item2 +2* box_size / proportion);
+                break;
 
-                vertices[24 * i + 6] = coords2.Item1;
-                vertices[24 * i + 7] = coords1.Item2;
-                vertices[24 * i + 8] = 0;
-                vertices[24 * i + 9] = textureX + 0.1f;
-                vertices[24 * i + 10] = textureY;
-                vertices[24 * i + 11] = textureId;
+                case 3:
+                 dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 + box_size / proportion, coords1.Item2,
+                coords2.Item1 + 2* box_size / proportion, coords1.Item2 +2* box_size / proportion);
 
-                vertices[24 * i + 12] = coords1.Item1;
-                vertices[24 * i + 13] = coords1.Item2;
-                vertices[24 * i + 14] = 0;
-                vertices[24 * i + 15] = textureX;
-                vertices[24 * i + 16] = textureY;
-                vertices[24 * i + 17] = textureId;
+                if (coords1.Item2 < coords2.Item2)
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords2.Item1 + box_size / proportion, coords2.Item2,
+                coords2.Item1 + 2* box_size / proportion, coords1.Item2);
+                else
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords2.Item1 + box_size / proportion, coords2.Item2,
+                coords2.Item1 + 2* box_size / proportion, coords1.Item2 +2* box_size / proportion);
+                 dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords2.Item1 + box_size / proportion, coords2.Item2,
+                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);
+                break;
 
-                vertices[24 * i + 18] = coords1.Item1;
-                vertices[24 * i + 19] = coords2.Item2;
-                vertices[24 * i + 20] = 0;
-                vertices[24 * i + 21] = textureX;
-                vertices[24 * i + 22] = textureY + 0.1f;
-                vertices[24 * i + 23] = textureId;
-            }
-            if (mode == 1)
-            {
+                case 4:
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion, coords1.Item2,
+                coords1.Item1 , coords1.Item2 +2* box_size / proportion);
 
-            }
-            return vertices;
+                if (coords1.Item2 < coords2.Item2)
+                {
+                    if (abs(coords1.Item2 - coords2.Item2) > box_size * 2)
+                    {
+
+                        float between = (coords1.Item2 + coords2.Item2) /2;
+                dataCollector.addRenderData(1, textureX, textureY,textureX +  0.1f, textureY + 0.1f,
+                coords1.Item1, between,
+                coords2.Item1 + 2* box_size / proportion, between+2* box_size / proportion);
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords2.Item1 + box_size / proportion, between,
+                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);      
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion, coords1.Item2,
+                coords1.Item1, between + 2*box_size / proportion); 
+                }
+                else
+                {
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion, coords1.Item2,
+                coords1.Item1, coords2.Item2 +6* box_size / proportion);
+
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion,  coords2.Item2 +4* box_size / proportion,
+                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +6* box_size / proportion); 
+
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords2.Item1 + box_size / proportion, coords2.Item2,
+                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +6* box_size / proportion); 
+                    }
+                }
+                else
+                {
+                    if (abs(coords1.Item2 - coords2.Item2) > box_size * 2)
+                    {
+
+                        float between = (coords1.Item2 + coords2.Item2) /2;
+                dataCollector.addRenderData(1, textureX, textureY,textureX +  0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion, between,
+                coords2.Item1 + 2* box_size / proportion, between+2* box_size / proportion);
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords2.Item1 + box_size / proportion, between,
+                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);      
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion, coords1.Item2,
+                coords1.Item1, between + 2*box_size / proportion); 
+                }
+                else
+                {
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion, coords1.Item2,
+                coords1.Item1, coords2.Item2 +6* box_size / proportion);
+
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords1.Item1 - box_size / proportion,  coords2.Item2 +4* box_size / proportion,
+                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +6* box_size / proportion); 
+
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords2.Item1 + box_size / proportion, coords2.Item2,
+                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +6* box_size / proportion); 
+                    }  
+                }
+                
+                
+                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                coords2.Item1 + box_size / proportion, coords2.Item2,
+                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);
+                break;
+                case 0:
+                break;
+                }
+              //  if (!listaPrzewodow[i].isSecondObjectLeft && !obj.isObjectNode(listaPrzewodow[i].secondObject)) coords1 = new Tuple<float, float>(coords1.Item1 + 1.5f * box_size, coords1.Item2 + box_size);
+
+                //if (!listaPrzewodow[i].isFirstObjectLeft && !obj.isObjectNode(listaPrzewodow[i].firstObject)) coords2 = new Tuple<float, float>(coords2.Item1 + 1.5f * box_size, coords2.Item2 + box_size);
+
+               
+                
+              // dataCollector.addRenderData(textureId, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+               // coords3.Item1, coords3.Item2, coords4.Item1, coords4.Item2 );
+
+               // dataCollector.addRenderData(textureId, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+               // coords4.Item1, coords4.Item2, coords2.Item1, coords2.Item2 );
+                }
+
 
         }
 
-        public uint[] renderIndices()
+        private float abs(float v)
         {
-            uint[] indices = new uint[(listaPrzewodow.Count()) * 6];
-            for (int i = 0; i < listaPrzewodow.Count() + 1; i++)
-            {
-                indices[i * 6] = (uint)(int)i * 4;
-                indices[i * 6 + 1] = (uint)(int)i * 4 + 1;
-                indices[i * 6 + 2] = (uint)(int)i * 4 + 3;
-                indices[i * 6 + 3] = (uint)(int)i * 4 + 1;
-                indices[i * 6 + 4] = (uint)(int)i * 4 + 2;
-                indices[i * 6 + 5] = (uint)(int)i * 4 + 3;
-            }
-            return indices;
+            if (v<0) return v * -1;
+            else return v;
         }
 
         public void mouseDragWire(int objectId, float mouseX, float mouseY, bool _isFirstLeft, bool _isSecondLeft)
@@ -168,28 +305,7 @@ namespace ElectricData
                         }
 
 
-                        //sprawdzamy gdzie dokładnie jest problem, suzkamy miejsc gdzie te nowe połączenie stwo4rzyło dwa połączenia do jednego modułu
-                        if ((listaPrzewodow[i].firstObject == objectId && listaPrzewodow[i].isFirstObjectLeft) || (listaPrzewodow[i].secondObject == objectId && listaPrzewodow[i].isSecondObjectLeft))
-                        {
-                            problem1List.Add(i);
-                            problemCount1++;
-                        }
-                        if ((listaPrzewodow[i].firstObject == objectId && !listaPrzewodow[i].isFirstObjectLeft) || (listaPrzewodow[i].secondObject == objectId && !listaPrzewodow[i].isSecondObjectLeft))
-                        {
-                            problem2List.Add(i);
-                            problemCount2++;
-                        }
 
-                        if ((listaPrzewodow[i].firstObject == startID && listaPrzewodow[i].isFirstObjectLeft) || (listaPrzewodow[i].secondObject == startID && listaPrzewodow[i].isSecondObjectLeft))
-                        {
-                            problem3List.Add(i);
-                            problemCount3++;
-                        }
-                        if ((listaPrzewodow[i].firstObject == startID && !listaPrzewodow[i].isFirstObjectLeft) || (listaPrzewodow[i].secondObject == startID && !listaPrzewodow[i].isSecondObjectLeft))
-                        {
-                            problem4List.Add(i);
-                            problemCount4++;
-                        }
 
                         if (shouldLoopFuckindDie) break;
                     }
@@ -337,7 +453,18 @@ namespace ElectricData
             }
             return -1;
         }
+        public void KillTheObject (int a)
+        {
+            for (int i=0; i< listaPrzewodow.Count; i++)
+            {
+                if (listaPrzewodow[i].firstObject == a || listaPrzewodow[i].secondObject == a)
+                {
+                    listaPrzewodow.RemoveAt(i);
+                    i--;
+                }
 
+            }
+        }
         public Tuple<Stack<int>, Tuple<int, int>> getConnections(int id)
         {
             int left = 0, right = 0;

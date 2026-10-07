@@ -36,7 +36,7 @@ namespace ElectricData
 
         }
 
-        public float[] renderVertices()
+        public void renderVertices(RenderDataCollector dataCollector)
         {
             float[] vertices = new float[(listaElementow.Count() + 1) * 24];
             float screenHeight = screenHeightGlobal;
@@ -49,35 +49,8 @@ namespace ElectricData
             float textureId;
             float textureX = 0f, textureY = 0.9f;
 
-
-
-            vertices[0] = right;
-            vertices[1] = top;
-            vertices[2] = 0;
-                vertices[3] = textureX + 0.1f;
-                vertices [4] = textureY + 0.1f;
-            vertices[5] = 0;
-
-            vertices[6] = right;
-            vertices[7] = bottom;
-            vertices[8] = 0;
-                vertices[9] = textureX + 0.1f;
-                vertices[10] = textureY;
-            vertices[11] = 0;
-
-            vertices[12] = left;
-            vertices[13] = bottom;
-            vertices[14] = 0;
-                vertices[15] = textureX;
-                vertices[16] = textureY;
-            vertices[17] = 0;
-
-            vertices[18] = left;
-            vertices[19] = top;
-            vertices[20] = 0;
-                vertices[21] = textureX;
-                vertices[22] = textureY + 0.1f;
-            vertices[23] = 0;
+            dataCollector.addRenderData(0, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                left, bottom,right, top );
 
 
             for (int i = 1; i < listaElementow.Count() + 1; i++)
@@ -98,35 +71,9 @@ namespace ElectricData
                 x_coords /= (screenWidth / 2);
                 y_coords /= (screenHeight / 2);
 
-                vertices[24 * i] = left + box_size * j + box_size;
-                vertices[24 * i + 1] = top;
-                vertices[24 * i + 2] = 0;
-                vertices[24 * i + 3] = textureX + 0.1f;
-                vertices[24 * i + 4] = textureY + 0.1f;
-                vertices[24 * i + 5] = textureId;
-
-                vertices[24 * i + 6] = left + box_size * j + box_size;
-                vertices[24 * i + 7] = bottom;
-                vertices[24 * i + 8] = 0;
-                vertices[24 * i + 9] = textureX + 0.1f;
-                vertices[24 * i + 10] = textureY;
-                vertices[24 * i + 11] = textureId;
-
-                vertices[24 * i + 12] = left + box_size * j;
-                vertices[24 * i + 13] = bottom;
-                vertices[24 * i + 14] = 0;
-                vertices[24 * i + 15] = textureX;
-                vertices[24 * i + 16] = textureY;
-                vertices[24 * i + 17] = textureId;
-
-                vertices[24 * i + 18] = left + box_size * j;
-                vertices[24 * i + 19] = top;
-                vertices[24 * i + 20] = 0;
-                vertices[24 * i + 21] = textureX;
-                vertices[24 * i + 22] = textureY + 0.1f;
-                vertices[24 * i + 23] = textureId;
+                dataCollector.addRenderData(0, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                 left + box_size * j, bottom,left + box_size * j + box_size, top );
             }
-            return vertices;
 
         }
         public int isAbove(float mouseX, float mouseY)

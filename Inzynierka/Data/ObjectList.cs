@@ -6,9 +6,10 @@ using static Program;
 
 namespace ElectricData
 {
+    
     public class ObjectList
     {
-        
+
         List<ElectricObject> listaObiektow = new List<ElectricObject>();
         Dictionary <int, Tuple<float,float>> objectCoordsMap = new Dictionary<int, Tuple<float, float>>();
         private static  ObjectList instance;
@@ -25,10 +26,12 @@ namespace ElectricData
             return listaObiektow;
         }
 
-
-        public float[] renderVertices()
+        public void KillTheObject (int a)
         {
-            float[] vertices = new float[(listaObiektow.Count()) * 24];
+
+    }
+        public  void renderVertices(RenderDataCollector dataCollector)
+        {
             float screenHeight = screenHeightGlobal;
             float
              screenWidth = screenWidthGlobal;
@@ -50,7 +53,7 @@ namespace ElectricData
                 y_coords = objectCoordsMap[j].Item2;
                 x_coords -= (screenWidth / 2);
                 y_coords -= (screenHeight / 2);
-                float box_size = 0.2f;
+                float box_size = 0.1f;
                 float proportion = screenWidthGlobal / screenHeightGlobal;
 
                 x_coords /= (screenWidth / 2);
@@ -61,35 +64,10 @@ namespace ElectricData
                     box_size = 0.1f;
                 }
 
-                vertices[24 * i] = x_coords + box_size / proportion;
-                vertices[24 * i + 1] = y_coords + box_size;
-                vertices[24 * i + 2] = 0;
-                vertices[24 * i + 3] = textureX + 0.1f;
-                vertices[24 * i + 4] = textureY + 0.1f;
-                vertices[24 * i + 5] = textureId;
-
-                vertices[24 * i + 6] = x_coords + box_size / proportion;
-                vertices[24 * i + 7] = y_coords;
-                vertices[24 * i + 8] = 0;
-                vertices[24 * i + 9] = textureX + 0.1f;
-                vertices[24 * i + 10] = textureY;
-                vertices[24 * i + 11] = textureId;
-
-                vertices[24 * i + 12] = x_coords;
-                vertices[24 * i + 13] = y_coords;
-                vertices[24 * i + 14] = 0;
-                vertices[24 * i + 15] = textureX;
-                vertices[24 * i + 16] = textureY;
-                vertices[24 * i + 17] = textureId;
-
-                vertices[24 * i + 18] = x_coords;
-                vertices[24 * i + 19] = y_coords + box_size;
-                vertices[24 * i + 20] = 0;
-                vertices[24 * i + 21] = textureX;
-                vertices[24 * i + 22] = textureY + 0.1f;
-                vertices[24 * i + 23] = textureId;
+                dataCollector.addRenderData(textureId, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                x_coords, y_coords,x_coords + box_size / proportion, y_coords + box_size );
+                
             }
-            return vertices;
 
         }
 
@@ -112,10 +90,12 @@ namespace ElectricData
             
         }
 
-        public void changeValueInObject(int objectId)
+        public void changeValueInObject(int objectId, int whichValue, double value)
         {
-            //listaObiektow[objectId].X += 0.1f;
+            listaObiektow[objectId].objectValues_list[whichValue] = new Tuple<objectValues,double>(listaObiektow[objectId].objectValues_list[whichValue].Item1,value);
         }
+
+
 
         public void mouseDragObject (int objectId, float mouseX, float mouseY)
         {
@@ -129,7 +109,7 @@ namespace ElectricData
             foreach(var item in objectCoordsMap)
             {
                 //NAPRAWIC: przy zmianie rozmiaru nie wychwytuje elementow
-                if (item.Value.Item1 < mouseX && item.Value.Item1 > mouseX - 100 && item.Value.Item2  < mouseY && item.Value.Item2 > mouseY - 100)
+                if (item.Value.Item1 < mouseX && item.Value.Item1 > mouseX - 50 && item.Value.Item2  < mouseY && item.Value.Item2 > mouseY - 50)
                 {
                     return item.Key;
                 }
@@ -174,7 +154,7 @@ namespace ElectricData
             if (objectId < 0) return false;
             var item = objectCoordsMap[objectId];
              y = screenHeightGlobal - y;
-             if (x< item.Item1 +50)
+             if (x< item.Item1 +25)
                 {
                    // Console.WriteLine("Jest po lewej stronie." + x + "A to koordynaty przedmiotu:" + item.Item1);
                     return true;
@@ -189,6 +169,14 @@ namespace ElectricData
                // Console.WriteLine(listaObiektow[i].imageLink + " " + listaObiektow[i].objectID );
             }
             return listaObiektow.Count();
+        }
+        public string GetObjectInfo (int id)
+        {
+            string returnString = "";
+            ElectricObject a = listaObiektow[id];
+            returnString += a.objectName;
+
+            return returnString;
         }
 
         public bool  isObjectNode (int id)
