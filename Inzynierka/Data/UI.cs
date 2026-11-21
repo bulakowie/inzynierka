@@ -31,7 +31,12 @@ namespace ElectricData
             listaElementow.Add(new ButtonCreateElement(3,new List<int>{95}));
             listaElementow.Add(new ButtonCreateElement(4,new List<int>{99}));
             listaElementow.Add(new ButtonCreateElement(5,new List<int>{91}));
-            listaElementow.Add(new ButtonCreateElement(6,new List<int>{93}));
+            listaElementow.Add(new ButtonCreateElement(6,new List<int>{55}));
+
+            listaElementow.Add(new ButtonCreateElement(7,new List<int>{45} ));
+            listaElementow.Add(new ButtonCreateElement(8,new List<int>{46} ));
+            listaElementow.Add(new ButtonCreateElement(9,new List<int>{47} ));
+
 
 
         }
@@ -82,23 +87,15 @@ namespace ElectricData
             if (mouseY < top * screenHeightGlobal && mouseY > bottom * screenHeightGlobal)
             {
                 //Console.WriteLine(mouseY);
-
-                if (mouseX < 0.1f * screenWidthGlobal)
-                {
-                    tick(0);
-                    return 0;
-                }
-                else if (mouseX < 0.2f * screenWidthGlobal)
-                {
-                    tick(1);
-                    return 1;
-                }
-                else if (mouseX < 0.3f * screenWidthGlobal)
-                {
-                    tick(2);
-                    return 4;
-                }
+                float g =  mouseX / (0.1f* screenWidthGlobal);
+                int lmoda = (int)(g);
+                tick(lmoda);
+                return lmoda;
                 // else Console.WriteLine(mouseX + "+" + (left +  0.2f) *screenWidthGlobal);
+            }
+            else if (true) 
+            {
+                
             }
 
             return -1;
@@ -106,6 +103,7 @@ namespace ElectricData
         int globalCoutner = 0;
         public void tick(int id)
         {
+            if (id >=9 || id < 0) return;
             ButtonCreateElement? a = listaElementow[id] as ButtonCreateElement;
 
             if (globalCoutner == 2000)

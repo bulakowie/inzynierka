@@ -12,6 +12,7 @@ using ElectricData;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Calculations;
 namespace Render
 {
 
@@ -229,6 +230,8 @@ namespace Render
 
         public void update(GameTime gametime, GameWindow gameWindow)
         {
+            int actionHappened = 1;
+            string solution;
             var mouse = gameWindow.MouseState;
             var keyboard = gameWindow.KeyboardState;
            
@@ -259,7 +262,18 @@ namespace Render
             {
                 if (mouse.IsButtonPressed(MouseButton.Left))
                 {
-                    objects.addObject(uis.isAbove(mouse.X, mouse.Y), 500, 500);
+                    int ret_add;
+                    int lol =uis.isAbove(mouse.X, mouse.Y);
+                    ret_add =objects.addObject(lol, 500, 500) ;
+                    if (ret_add < 0)
+                    {
+                        if (5 ==SavingAndLoading.sorter(lol))
+                        {
+                            string s = CalculateMain.CalculateMainHub(0);
+                            textManager.writeSolution(s);
+                            actionHappened = 0;
+                        }
+                    }
                     connections.isCircuitClosed(objects);
                 }
             }
@@ -275,12 +289,14 @@ namespace Render
                 mode = 1;
             }
             //pierwsze nacisniecie:
-            else if (mouse.IsButtonPressed(MouseButton.Left))
+            else if (mouse.IsButtonPressed(MouseButton.Left) && actionHappened == 1)
             {
+                 textManager.writeSolution("");
                 ret = objects.gotObjectPressed(mouse.X, mouse.Y);
             }
-            else if (mouse.IsButtonDown(MouseButton.Right))
+            else if (mouse.IsButtonDown(MouseButton.Right) && actionHappened == 1)
             {
+                textManager.writeSolution("");
                 ret = objects.gotObjectPressed(mouse.X, mouse.Y);
                 if (ret >= 0)
                 {
@@ -289,8 +305,9 @@ namespace Render
                 }
 
             }
-            else if (mouse.IsButtonDown(MouseButton.Middle))
+            else if (mouse.IsButtonDown(MouseButton.Middle) && actionHappened == 1)
             {
+                textManager.writeSolution("");
                 ret2 = objects.gotObjectPressed(mouse.X, mouse.Y);
             }
             //jesli nie trzyma nic to:
@@ -314,7 +331,7 @@ namespace Render
         }
         public void render(GameTime gametime)
         {
-            GL.ClearColor(Color4.Chocolate);
+            GL.ClearColor(Color4.MintCream);
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.UseProgram(_shaderHandle);
             GL.BindVertexArray(_vertexArrayObject);

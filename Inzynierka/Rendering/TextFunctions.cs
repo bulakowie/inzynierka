@@ -19,13 +19,14 @@ using System.Globalization;
 
 public class TextManager
 {
+    string solution = "";
     int blocker = 0; //blocker blokuje powtarzanie się jednej funkcji 10 klatek na sekunde
     List<Tuple<float, float>> piotrus = new List<Tuple<float, float>>();
     string g = "";
-    int line_interest = 0;
+    int line_interest = 1;
     int line_numbers =0;
     int currentObject = -1;
-    public List<Tuple<float, float>> LetterToSpriteCoords()
+    public List<Tuple<float, float>> LetterToSpriteCoords(string g)
     {
         int lineC = 0;
         piotrus = new List<Tuple<float, float>>();
@@ -38,9 +39,13 @@ public class TextManager
         float x = posx / 16;
         float y = posy / 16; 
         y = 1 - y;
+        if (g[i] == '\n')
+            {
+                
+            }
        if (letterId == 10)
        {
-            if (line_interest == lineC) piotrus.Add(new Tuple<float,float>(0.9375f,0.625f));
+            if (line_interest == lineC && line_interest != 0) piotrus.Add(new Tuple<float,float>(0.9375f,0.625f));
             lineC++;
             x = -1;  
        }
@@ -51,7 +56,7 @@ public class TextManager
     }
     public void renderVertices(RenderDataCollector dataCollector)
         {
-            LetterToSpriteCoords();
+            LetterToSpriteCoords(g);
             float[] vertices = new float[piotrus.Count * 24];
             float screenHeight = screenHeightGlobal;
             float
@@ -95,8 +100,89 @@ dataCollector.addRenderData(textureId, textureX, textureY,textureX +  1/16f, tex
                 x_coords + box_size / proportion + gh%16 *box_size/ proportion, y_coords + box_size - line * box_size / proportion);
         }
 
+        List<Tuple<Tuple<float,float>, string>> aboveObjectsData = renderDataAboveObjects();
+        for (int i=0; i< aboveObjectsData.Count(); i++)
+        {
+            List<Tuple<float, float>> hemingway = LetterToSpriteCoords(aboveObjectsData[i].Item2);
+            for (int j =0; j<hemingway.Count(); j++)
+            {
+                x_coords = aboveObjectsData[i].Item1.Item1;
+                y_coords = aboveObjectsData[i].Item1.Item2;
+                x_coords -= (screenWidth / 2);
+                y_coords -= (screenHeight / 2);
+                float box_size = 0.05f; 
+                float proportion = screenWidthGlobal / screenHeightGlobal;
+
+                x_coords /= (screenWidth / 2);
+                y_coords /= (screenHeight / 2);
+                float textureX = hemingway[j].Item1;
+                float textureY = hemingway[j].Item2;
+                dataCollector.addRenderData(1, textureX, textureY,textureX +  1/16f, textureY  +  1/16f,
+                x_coords + j*box_size /proportion, y_coords + 2*box_size,
+                x_coords + (1+j)*box_size / proportion, y_coords + 3*box_size);
+       
+            }
+        }
+
+        if (solution == "") return;
+        int lineProblem2 =0;
+        int lineAdd2 = 0;
+        List<Tuple<Tuple<float,float>, string>> solution_word = renderSolutionData();
+        for (int i=0; i< solution_word.Count(); i++)
+        {
+            List<Tuple<float, float>> hemingway = LetterToSpriteCoords(solution_word[i].Item2);
+            for (int j =0; j<hemingway.Count(); j++)
+            {
+                if (hemingway[j].Item1 == -1f)
+                {
+                lineAdd2++;
+                lineProblem2 = j+1;
+                continue;
+            }
+                x_coords = solution_word[i].Item1.Item1;
+                y_coords = solution_word[i].Item1.Item2;
+                x_coords -= (screenWidth / 2);
+                y_coords -= (screenHeight / 2);
+                float box_size = 0.05f; 
+                float proportion = screenWidthGlobal / screenHeightGlobal;
+
+                x_coords /= (screenWidth / 2);
+                y_coords /= (screenHeight / 2);
+                float textureX = hemingway[j].Item1;
+                float textureY = hemingway[j].Item2;
+                int gh = j-lineProblem2;
+                float line =lineAdd2 * 2;
+dataCollector.addRenderData(1, textureX, textureY,textureX +  1/16f, textureY  +  1/16f,
+                x_coords + gh *box_size / proportion, y_coords - line * box_size / proportion,
+                x_coords + box_size / proportion + gh *box_size/ proportion, y_coords + box_size - line * box_size / proportion);
+       
+       
+            }
+        }
+
     }
-           
+    public List<Tuple<Tuple<float,float>, string>> renderDataAboveObjects()
+    {
+        List<Tuple<Tuple<float,float>, string>> ret = new List<Tuple<Tuple<float,float>, string>>();
+        ObjectList obj = ObjectList.getInstance();
+        for (int i=0; i<obj.getLenght(); i++)
+        {
+            string h = "";
+            ElectricObject a = obj.returnLista()[i];
+            Tuple<float,float> coords = obj.returnObjectCoords(i);
+            for (int j=0; j< a.objectValues_list.Count(); j++)
+            {
+            h += "[" + i + "]" + a.objectValues_list[j].Item1.ToString()[0]+ ":";
+            if (a.isNull) h+= "???";
+            else h+=a.objectValues_list[j].Item2.ToString();
+            h += '\n';
+            ret.Add(new Tuple<Tuple<float, float>, string>(coords, h));
+            }
+
+        }
+        return ret;
+    }
+
     public void writingObjectData(int ret2)
     {
         if (ret2 == currentObject) return;
@@ -115,7 +201,7 @@ dataCollector.addRenderData(textureId, textureX, textureY,textureX +  1/16f, tex
         {
             g += a.objectValues_list[i].Item1.ToString()+ ":"+  a.objectValues_list[i].Item2.ToString();
             g += '\n';
-            line_interest = i;
+            line_interest = i +1;
             line_numbers++;
             currentObject = ret2;
         }
@@ -132,7 +218,7 @@ dataCollector.addRenderData(textureId, textureX, textureY,textureX +  1/16f, tex
                 if (a == line_interest)
                 {
                 g = g.Insert(i, input.ToString());
-                LetterToSpriteCoords();
+                LetterToSpriteCoords(g);
                 return;
                 }
                 else a++;
@@ -152,7 +238,7 @@ dataCollector.addRenderData(textureId, textureX, textureY,textureX +  1/16f, tex
         {
             if (blocker == 0) return 0;
             line_interest -=1;
-            if (line_interest <0) line_interest = 0;
+            if (line_interest <=0) line_interest = 1;
             blocker = 0;
         }
         else if (symbol == 1) //zczytaj wartosci, zamknij kram.
@@ -204,7 +290,7 @@ dataCollector.addRenderData(textureId, textureX, textureY,textureX +  1/16f, tex
                     {
                         Console.WriteLine(execution + " " + (i-1));
                         g = g.Remove(i-1,1);
-                        LetterToSpriteCoords();
+                        LetterToSpriteCoords(g);
                         blocker = 0;
                         return 0;
                     }
@@ -219,4 +305,21 @@ dataCollector.addRenderData(textureId, textureX, textureY,textureX +  1/16f, tex
             return 0;
 
     }   
+
+    public void writeSolution (string a)
+    {
+        solution = a;
+    }
+    public List<Tuple<Tuple<float,float>, string>> renderSolutionData()
+    {
+        List<Tuple<Tuple<float,float>, string>> ret = new List<Tuple<Tuple<float,float>, string>>();
+        string s = solution.ToString();
+        if (solution == "") return null;
+        ret.Add(new Tuple<Tuple<float, float>, string>(new Tuple<float,float>(5f,screenHeightGlobal * 0.8f), s));
+
+        
+        return ret;
+    }
+
+
 }

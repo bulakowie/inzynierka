@@ -1,4 +1,6 @@
 using System.Data;
+using System.Net.Http.Headers;
+using System.Xml;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using static Program;
@@ -19,8 +21,8 @@ namespace ElectricData
         int isWireActive;
         int startID;
         List<Wire> listaPrzewodow;
-        public ConnectionList instance;
-        public ConnectionList getInstance()
+        private static ConnectionList instance;
+        public static ConnectionList getInstance()
         {
             if (instance == null)
             {
@@ -28,6 +30,38 @@ namespace ElectricData
                 return instance;
             }
             else return instance;
+        }
+        public int getLenght()
+        {
+            return listaPrzewodow.Count();
+        }
+        public void clear ()
+        {
+            listaPrzewodow = new List<Wire>();
+        }
+        public List<Wire> GetWires()
+        {
+            return listaPrzewodow;
+        }
+        public List<Wire> GetWiresForOneLEFT(int a)
+        {
+            List<Wire> ret = new List<Wire>();
+            for (int i = 0; i < listaPrzewodow.Count(); i++)
+            {
+                if (listaPrzewodow[i].firstObject == a && listaPrzewodow[i].isFirstObjectLeft) ret.Add(listaPrzewodow[i]);
+                else if (listaPrzewodow[i].secondObject == a && listaPrzewodow[i].isSecondObjectLeft) ret.Add(listaPrzewodow[i]);
+            }
+            return ret;
+        }
+        public List<Wire> GetWiresForOneRIGHT(int a)
+        {
+            List<Wire> ret = new List<Wire>();
+            for (int i = 0; i < listaPrzewodow.Count(); i++)
+            {
+                if (listaPrzewodow[i].firstObject == a && !listaPrzewodow[i].isFirstObjectLeft) ret.Add(listaPrzewodow[i]);
+                else if (listaPrzewodow[i].secondObject == a && !listaPrzewodow[i].isSecondObjectLeft) ret.Add(listaPrzewodow[i]);
+            }
+            return ret;
         }
 
         //renderowanie kabli, musimy sciagnac dane na temat polozenia elementow a nbastepnie rozciagnac ten kabel tak by wygladalo to dobrze //bog mi swiadkiem co mnie podkusilo by pisac w C#
@@ -53,19 +87,20 @@ namespace ElectricData
                 //2. Odwrotny, jeśli jeden lub dwa kable wymagają zawrócenia, czyli są skeirowane w przeciwną stronę niż ich partenr
                 //wtedy trzeba kabel wyprowadzic, przeciaganc w gore lub w doł, zawrócić, znowu góre lub w dół i połączyć
                 //
-                
-                
+
+
                 int a = 2;
                 bool c1_isLeft, c2_isLeft;
                 float textureX = 0.8f;
                 float textureY = 0.9f;
+                float cableWidth = box_size / 3;
                 if (obj.returnObjectCoords(listaPrzewodow[i].secondObject).Item1 < obj.returnObjectCoords(listaPrzewodow[i].firstObject).Item1)
                 {
-                   // Console.WriteLine("SWAP");
+                    // Console.WriteLine("SWAP");
                     coords1 = obj.returnObjectCoords(listaPrzewodow[i].secondObject);
                     coords2 = obj.returnObjectCoords(listaPrzewodow[i].firstObject);
-                    c1_isLeft =listaPrzewodow[i].isSecondObjectLeft;
-                    c2_isLeft =listaPrzewodow[i].isFirstObjectLeft;
+                    c1_isLeft = listaPrzewodow[i].isSecondObjectLeft;
+                    c2_isLeft = listaPrzewodow[i].isFirstObjectLeft;
 
                     textureY = 1f;
                 }
@@ -73,9 +108,9 @@ namespace ElectricData
                 {
                     coords1 = obj.returnObjectCoords(listaPrzewodow[i].firstObject);
                     coords2 = obj.returnObjectCoords(listaPrzewodow[i].secondObject);
-                    c1_isLeft =listaPrzewodow[i].isFirstObjectLeft;
-                    c2_isLeft =listaPrzewodow[i].isSecondObjectLeft;
-                    
+                    c1_isLeft = listaPrzewodow[i].isFirstObjectLeft;
+                    c2_isLeft = listaPrzewodow[i].isSecondObjectLeft;
+
                 }
 
 
@@ -85,167 +120,244 @@ namespace ElectricData
                 coords1 = new Tuple<float, float>(coords1.Item1 / (screenWidth / 2), coords1.Item2 / (screenHeight / 2));
                 coords2 = new Tuple<float, float>(coords2.Item1 / (screenWidth / 2), coords2.Item2 / (screenHeight / 2));
 
-               if (!c1_isLeft && c2_isLeft) a = 1;
-               else if (c1_isLeft && c2_isLeft )a = 2;
-               else if (!c1_isLeft && !c2_isLeft )a = 3;
+                if (!c1_isLeft && c2_isLeft) a = 1;
+                else if (c1_isLeft && c2_isLeft) a = 2;
+                else if (!c1_isLeft && !c2_isLeft) a = 3;
                 else if (c1_isLeft && !c2_isLeft) a = 4;
-               else a = 0;
+                else a = 0;
                 switch (a)
                 {
                     case 1:
-                    //jesli odleglosc miedzy nimi jest wieksza niz 1 box, ORAZ drugi przedmiot patrzy w naszą stronę
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 + box_size / proportion, coords1.Item2,
-                coords1.Item1 + 2* box_size / proportion, coords1.Item2 +2* box_size / proportion);
+                        //jesli odleglosc miedzy nimi jest wieksza niz 1 box, ORAZ drugi przedmiot patrzy w naszą stronę
+                        dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                        coords1.Item1 + box_size / proportion, coords1.Item2 + cableWidth,
+                        coords1.Item1 + 2 * box_size / proportion, coords1.Item2 + 2 * box_size / proportion - cableWidth);
 
-                if (coords1.Item2 < coords2.Item2)
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 + box_size / proportion, coords1.Item2,
-                coords1.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);
-                else
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 + box_size / proportion, coords1.Item2,
-                coords1.Item1 + 2* box_size / proportion, coords2.Item2 );
+                        if (coords1.Item2 < coords2.Item2)
+                            dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                            coords1.Item1 + box_size / proportion + 2 * cableWidth, coords1.Item2 + cableWidth,
+                            coords1.Item1 + 2 * box_size / proportion, coords2.Item2 + 2 * box_size / proportion - cableWidth);
+                        else
+                            dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                            coords1.Item1 + box_size / proportion + 2 * cableWidth, coords1.Item2 + 2 * cableWidth,
+                            coords1.Item1 + 2 * box_size / proportion, coords2.Item2 + cableWidth);
 
 
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 + 2* box_size / proportion, coords2.Item2,
-                coords2.Item1, coords2.Item2 +2* box_size / proportion);
-                break;
+                        dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                        coords1.Item1 + 2 * box_size / proportion, coords2.Item2 + cableWidth,
+                        coords2.Item1, coords2.Item2 + 2 * box_size / proportion - cableWidth);
+                        break;
 
                     case 2:
-                    //jesli my jestesmy odwroceni od rugeigo obiektu plecami
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion, coords1.Item2,
-                coords1.Item1 , coords1.Item2 +2* box_size / proportion);
+                        // Jeśli my jesteśmy odwróceni od drugiego obiektu plecami
+                        dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                            coords1.Item1 - box_size / proportion, coords1.Item2 + cableWidth,
+                            coords1.Item1, coords1.Item2 + 2 * box_size / proportion - cableWidth);
 
-                if (coords1.Item2 < coords2.Item2)
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion, coords1.Item2,
-                coords1.Item1, coords2.Item2 +2* box_size / proportion);
-                else
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion, coords1.Item2,
-                coords1.Item1 , coords2.Item2 );
+                        if (coords1.Item2 < coords2.Item2)
+                            dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1 - box_size / proportion , coords1.Item2 + cableWidth,
+                                coords1.Item1 - cableWidth, coords2.Item2 + 2 * box_size / proportion - cableWidth);
+                        else
+                            dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1 - box_size / proportion, coords1.Item2 + 2 * cableWidth,
+                                coords1.Item1 - cableWidth, coords2.Item2 + cableWidth);
 
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1, coords2.Item2,
-                coords2.Item1, coords2.Item2 +2* box_size / proportion);
-                break;
+                        dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                            coords1.Item1 - box_size / proportion, coords2.Item2 + cableWidth,
+                            coords2.Item1, coords2.Item2 + 2 * box_size / proportion - cableWidth);
+                        break;
 
-                case 3:
-                 dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 + box_size / proportion, coords1.Item2,
-                coords2.Item1 + 2* box_size / proportion, coords1.Item2 +2* box_size / proportion);
 
-                if (coords1.Item2 < coords2.Item2)
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords2.Item1 + box_size / proportion, coords2.Item2,
-                coords2.Item1 + 2* box_size / proportion, coords1.Item2);
-                else
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords2.Item1 + box_size / proportion, coords2.Item2,
-                coords2.Item1 + 2* box_size / proportion, coords1.Item2 +2* box_size / proportion);
-                 dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords2.Item1 + box_size / proportion, coords2.Item2,
-                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);
-                break;
+                    case 3:
+                        dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                            coords1.Item1 + box_size / proportion, coords1.Item2 + cableWidth,
+                            coords2.Item1 + 2 * box_size / proportion, coords1.Item2 + 2 * box_size / proportion - cableWidth);
 
-                case 4:
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion, coords1.Item2,
-                coords1.Item1 , coords1.Item2 +2* box_size / proportion);
+                        if (coords1.Item2 < coords2.Item2)
+                            dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords2.Item1 + box_size / proportion + 2*cableWidth, coords2.Item2 + 2*cableWidth,
+                                coords2.Item1 + 2 * box_size / proportion, coords1.Item2 + cableWidth );
+                        else
+                            dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords2.Item1 + box_size / proportion + 2*cableWidth, coords2.Item2 + cableWidth,
+                                coords2.Item1 + 2 * box_size / proportion, coords1.Item2 + 2*cableWidth   );
 
-                if (coords1.Item2 < coords2.Item2)
-                {
-                    if (abs(coords1.Item2 - coords2.Item2) > box_size * 2)
-                    {
+                        dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                            coords2.Item1 + box_size / proportion, coords2.Item2 + cableWidth,
+                            coords2.Item1 + 2 * box_size / proportion, coords2.Item2 + 2 * box_size / proportion - cableWidth);
+                        break;
 
-                        float between = (coords1.Item2 + coords2.Item2) /2;
-                dataCollector.addRenderData(1, textureX, textureY,textureX +  0.1f, textureY + 0.1f,
-                coords1.Item1, between,
-                coords2.Item1 + 2* box_size / proportion, between+2* box_size / proportion);
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords2.Item1 + box_size / proportion, between,
-                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);      
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion, coords1.Item2,
-                coords1.Item1, between + 2*box_size / proportion); 
+
+                    case 4:
+                        dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                            coords1.Item1 - box_size / proportion, coords1.Item2 + cableWidth,
+                            coords1.Item1, coords1.Item2 + 2 * box_size / proportion - cableWidth);
+
+                        if (coords1.Item2 < coords2.Item2)
+                        {
+                            if (abs(coords1.Item2 - coords2.Item2) > box_size * 2)
+                            {
+                                float between = (coords1.Item2 + coords2.Item2) / 2;
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords1.Item1 + cableWidth, between + cableWidth,
+                                    coords2.Item1 + 2 * box_size / proportion - cableWidth, between + 2 * box_size / proportion - cableWidth);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords2.Item1 + box_size / proportion + cableWidth, between + cableWidth,
+                                    coords2.Item1 + 2 * box_size / proportion - cableWidth, coords2.Item2 + 2 * box_size / proportion - cableWidth);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords1.Item1 - box_size / proportion + cableWidth, coords1.Item2 + cableWidth,
+                                    coords1.Item1 - cableWidth, between + 2 * box_size / proportion - cableWidth);
+                            }
+                            else
+                            {
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords1.Item1 - box_size / proportion + cableWidth, coords1.Item2 + cableWidth,
+                                    coords1.Item1 - cableWidth, coords2.Item2 + 6 * box_size / proportion - cableWidth);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords1.Item1 - box_size / proportion + cableWidth, coords2.Item2 + 4 * box_size / proportion + cableWidth,
+                                    coords2.Item1 + 2 * box_size / proportion - cableWidth, coords2.Item2 + 6 * box_size / proportion - cableWidth);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords2.Item1 + box_size / proportion + cableWidth, coords2.Item2 + cableWidth,
+                                    coords2.Item1 + 2 * box_size / proportion - cableWidth, coords2.Item2 + 6 * box_size / proportion - cableWidth);
+                            }
+                        }
+                        else
+                        {
+                            if (abs(coords1.Item2 - coords2.Item2) > box_size * 2)
+                            {
+                                float between = (coords1.Item2 + coords2.Item2) / 2;
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords1.Item1 - box_size / proportion + cableWidth, between + cableWidth,
+                                    coords2.Item1 + 2 * box_size / proportion - cableWidth, between + 2 * box_size / proportion - cableWidth);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords2.Item1 + box_size / proportion + cableWidth, between + cableWidth,
+                                    coords2.Item1 + 2 * box_size / proportion - cableWidth, coords2.Item2 + 2 * box_size / proportion - cableWidth);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords1.Item1 - box_size / proportion + cableWidth, coords1.Item2 + cableWidth,
+                                    coords1.Item1 - cableWidth, between + 2 * box_size / proportion - cableWidth);
+                            }
+                            else
+                            {
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords1.Item1 - box_size / proportion + cableWidth, coords1.Item2 + cableWidth,
+                                    coords1.Item1 - cableWidth, coords2.Item2 + 6 * box_size / proportion - cableWidth);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords1.Item1 - box_size / proportion + cableWidth, coords2.Item2 + 4 * box_size / proportion + cableWidth,
+                                    coords2.Item1 + 2 * box_size / proportion - cableWidth, coords2.Item2 + 6 * box_size / proportion - cableWidth);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                    coords2.Item1 + box_size / proportion + cableWidth, coords2.Item2 + cableWidth,
+                                    coords2.Item1 + 2 * box_size / proportion - cableWidth, coords2.Item2 + 6 * box_size / proportion - cableWidth);
+                            }
+                        }
+
+                        dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                            coords2.Item1 + box_size / proportion + cableWidth, coords2.Item2 + cableWidth,
+                            coords2.Item1 + 2 * box_size / proportion - cableWidth, coords2.Item2 + 2 * box_size / proportion - cableWidth);
+                        break;
+
+                    case 0:
+                        break;
+
+                        if (coords1.Item2 < coords2.Item2)
+                        {
+                            if (abs(coords1.Item2 - coords2.Item2) > box_size * 2)
+                            {
+
+                                float between = (coords1.Item2 + coords2.Item2) / 2;
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1, between,
+                                coords2.Item1 + 2 * box_size / proportion, between + 2 * box_size / proportion);
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords2.Item1 + box_size / proportion, between,
+                                coords2.Item1 + 2 * box_size / proportion, coords2.Item2 + 2 * box_size / proportion);
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1 - box_size / proportion, coords1.Item2,
+                                coords1.Item1, between + 2 * box_size / proportion);
+                            }
+                            else
+                            {
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1 - box_size / proportion, coords1.Item2,
+                                coords1.Item1, coords2.Item2 + 6 * box_size / proportion);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1 - box_size / proportion, coords2.Item2 + 4 * box_size / proportion,
+                                coords2.Item1 + 2 * box_size / proportion, coords2.Item2 + 6 * box_size / proportion);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords2.Item1 + box_size / proportion, coords2.Item2,
+                                coords2.Item1 + 2 * box_size / proportion, coords2.Item2 + 6 * box_size / proportion);
+                            }
+                        }
+                        else
+                        {
+                            if (abs(coords1.Item2 - coords2.Item2) > box_size * 2)
+                            {
+
+                                float between = (coords1.Item2 + coords2.Item2) / 2;
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1 - box_size / proportion, between,
+                                coords2.Item1 + 2 * box_size / proportion, between + 2 * box_size / proportion);
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords2.Item1 + box_size / proportion, between,
+                                coords2.Item1 + 2 * box_size / proportion, coords2.Item2 + 2 * box_size / proportion);
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1 - box_size / proportion, coords1.Item2,
+                                coords1.Item1, between + 2 * box_size / proportion);
+                            }
+                            else
+                            {
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1 - box_size / proportion, coords1.Item2,
+                                coords1.Item1, coords2.Item2 + 6 * box_size / proportion);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords1.Item1 - box_size / proportion, coords2.Item2 + 4 * box_size / proportion,
+                                coords2.Item1 + 2 * box_size / proportion, coords2.Item2 + 6 * box_size / proportion);
+
+                                dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                                coords2.Item1 + box_size / proportion, coords2.Item2,
+                                coords2.Item1 + 2 * box_size / proportion, coords2.Item2 + 6 * box_size / proportion);
+                            }
+                        }
+
+
+                        dataCollector.addRenderData(1, textureX, textureY, textureX + 0.1f, textureY + 0.1f,
+                        coords2.Item1 + box_size / proportion, coords2.Item2,
+                        coords2.Item1 + 2 * box_size / proportion, coords2.Item2 + 2 * box_size / proportion);
+                        break;
+                    
                 }
-                else
-                {
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion, coords1.Item2,
-                coords1.Item1, coords2.Item2 +6* box_size / proportion);
-
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion,  coords2.Item2 +4* box_size / proportion,
-                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +6* box_size / proportion); 
-
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords2.Item1 + box_size / proportion, coords2.Item2,
-                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +6* box_size / proportion); 
-                    }
-                }
-                else
-                {
-                    if (abs(coords1.Item2 - coords2.Item2) > box_size * 2)
-                    {
-
-                        float between = (coords1.Item2 + coords2.Item2) /2;
-                dataCollector.addRenderData(1, textureX, textureY,textureX +  0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion, between,
-                coords2.Item1 + 2* box_size / proportion, between+2* box_size / proportion);
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords2.Item1 + box_size / proportion, between,
-                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);      
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion, coords1.Item2,
-                coords1.Item1, between + 2*box_size / proportion); 
-                }
-                else
-                {
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion, coords1.Item2,
-                coords1.Item1, coords2.Item2 +6* box_size / proportion);
-
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords1.Item1 - box_size / proportion,  coords2.Item2 +4* box_size / proportion,
-                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +6* box_size / proportion); 
-
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords2.Item1 + box_size / proportion, coords2.Item2,
-                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +6* box_size / proportion); 
-                    }  
-                }
-                
-                
-                dataCollector.addRenderData(1, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-                coords2.Item1 + box_size / proportion, coords2.Item2,
-                coords2.Item1 + 2* box_size / proportion, coords2.Item2 +2* box_size / proportion);
-                break;
-                case 0:
-                break;
-                }
-              //  if (!listaPrzewodow[i].isSecondObjectLeft && !obj.isObjectNode(listaPrzewodow[i].secondObject)) coords1 = new Tuple<float, float>(coords1.Item1 + 1.5f * box_size, coords1.Item2 + box_size);
+                //  if (!listaPrzewodow[i].isSecondObjectLeft && !obj.isObjectNode(listaPrzewodow[i].secondObject)) coords1 = new Tuple<float, float>(coords1.Item1 + 1.5f * box_size, coords1.Item2 + box_size);
 
                 //if (!listaPrzewodow[i].isFirstObjectLeft && !obj.isObjectNode(listaPrzewodow[i].firstObject)) coords2 = new Tuple<float, float>(coords2.Item1 + 1.5f * box_size, coords2.Item2 + box_size);
 
-               
-                
-              // dataCollector.addRenderData(textureId, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-               // coords3.Item1, coords3.Item2, coords4.Item1, coords4.Item2 );
 
-               // dataCollector.addRenderData(textureId, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
-               // coords4.Item1, coords4.Item2, coords2.Item1, coords2.Item2 );
-                }
+
+                // dataCollector.addRenderData(textureId, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                // coords3.Item1, coords3.Item2, coords4.Item1, coords4.Item2 );
+
+                // dataCollector.addRenderData(textureId, textureX, textureY,textureX + 0.1f, textureY + 0.1f,
+                // coords4.Item1, coords4.Item2, coords2.Item1, coords2.Item2 );
+            }
 
 
         }
 
         private float abs(float v)
         {
-            if (v<0) return v * -1;
+            if (v < 0) return v * -1;
             else return v;
         }
 
@@ -453,9 +565,9 @@ namespace ElectricData
             }
             return -1;
         }
-        public void KillTheObject (int a)
+        public void KillTheObject(int a)
         {
-            for (int i=0; i< listaPrzewodow.Count; i++)
+            for (int i = 0; i < listaPrzewodow.Count; i++)
             {
                 if (listaPrzewodow[i].firstObject == a || listaPrzewodow[i].secondObject == a)
                 {
@@ -487,7 +599,7 @@ namespace ElectricData
             }
             return new Tuple<Stack<int>, Tuple<int, int>>(ret, new Tuple<int, int>(left, right));
         }
-        public void isCircuitClosed(ObjectList obj)
+        public bool isCircuitClosed(ObjectList obj)
         {
             Dictionary<int, int> objMap = new Dictionary<int, int>();
             int i = 0, a = 0;
@@ -503,7 +615,7 @@ namespace ElectricData
             {
                 if (!obj.isObjectNode(0))
                 {
-                    isTheWireCorrect = false; return;
+                    isTheWireCorrect = false; return false;
                 }
             }
             while (stosz.Count() > 0)
@@ -519,7 +631,7 @@ namespace ElectricData
                 {
                     if (!obj.isObjectNode(0))
                     {
-                        isTheWireCorrect = false; return;
+                        isTheWireCorrect = false; return false;
                     }
                 }
                 while (stosz2.Count > 0)
@@ -541,10 +653,17 @@ namespace ElectricData
             {
                 isTheWireCorrect = false;
             }
+            return isTheWireCorrect;
 
+
+        }
+        public void professionalAddObject(Wire a)
+        {
+            listaPrzewodow.Add(a);
         }
 
     }
+
 
 
 

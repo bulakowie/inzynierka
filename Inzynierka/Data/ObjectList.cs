@@ -1,5 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Encodings.Web;
+using Calculations;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using static Program;
@@ -26,10 +27,10 @@ namespace ElectricData
             return listaObiektow;
         }
 
-        public void KillTheObject (int a)
-        {
+        public void KillTheObject(int a)
+{
 
-    }
+}
         public  void renderVertices(RenderDataCollector dataCollector)
         {
             float screenHeight = screenHeightGlobal;
@@ -71,20 +72,7 @@ namespace ElectricData
 
         }
 
-        public uint[] renderIndices (int size)
-        {
-            uint [] indices = new uint [size/24 * 6];
-            for (int i=0; i< size/24; i++)
-            {
-                indices[i*6] = (uint) (int)i*4;
-                indices[i*6+1] = (uint) (int)i*4+1;
-                indices[i*6+2] = (uint) (int)i*4+3;
-                indices[i*6+3] = (uint) (int)i*4+1;
-                indices[i*6+4] = (uint) (int)i*4+2;
-                indices[i*6+5] = (uint) (int)i*4+3;
-            }
-            return indices;
-        }
+   
         public void deleteObject ()
         {
             
@@ -93,6 +81,7 @@ namespace ElectricData
         public void changeValueInObject(int objectId, int whichValue, double value)
         {
             listaObiektow[objectId].objectValues_list[whichValue] = new Tuple<objectValues,double>(listaObiektow[objectId].objectValues_list[whichValue].Item1,value);
+            if (value!=0) listaObiektow[objectId].isNull = false;
         }
 
 
@@ -101,7 +90,8 @@ namespace ElectricData
         {
             float proportion = screenWidthGlobal / screenHeightGlobal;
             objectCoordsMap[objectId] = new Tuple<float,float>(Math.Clamp(mouseX, 0, screenWidthGlobal - 100 ),Math.Clamp( screenHeightGlobal - mouseY,0,screenHeightGlobal - 100 ));
-
+            listaObiektow[objectId].X =  objectCoordsMap[objectId].Item1;
+            listaObiektow[objectId].Y =  objectCoordsMap[objectId].Item2;
         }
         public int gotObjectPressed (float mouseX, float mouseY)
         {
@@ -118,7 +108,7 @@ namespace ElectricData
             return -1;
         }
 
-        public void addObject(int objectId, float x, float y)
+        public int addObject(int objectId, float x, float y)
         {
             switch (objectId)
             {
@@ -132,18 +122,16 @@ namespace ElectricData
                 listaObiektow.Add(b);
                 b = null;
                 break;
-                case 3:
-                Node c = new Node(x,y);
-                listaObiektow.Add(c);
-                break;
-                case 4:
+
+                case 2:
                 ACSource d= new ACSource(x,y);
                 listaObiektow.Add(d);
                 break;
-
-                default: return;
+                break;
+                default: return -1;
             }
             objectCoordsMap[listaObiektow.Count()-1] = new Tuple<float, float>(listaObiektow[listaObiektow.Count()-1].X, listaObiektow[listaObiektow.Count()-1].Y);
+        return 0;
         }
         public Tuple <float,float> returnObjectCoords(int a)
         {
@@ -184,5 +172,17 @@ namespace ElectricData
             if (listaObiektow[id].imageLink== 23) return true;
             else return false;
         }
+        public void clear()
+        {
+            listaObiektow = new List<ElectricObject>();
+            objectCoordsMap = new Dictionary<int, Tuple<float, float>>();
+        }
+        public void professionalAddObject (ElectricObject a)
+        {
+            listaObiektow.Add(a);
+            objectCoordsMap[listaObiektow.Count()-1] = new Tuple<float, float>(a.X, a.Y);
+
+        }
+        
     }
 }

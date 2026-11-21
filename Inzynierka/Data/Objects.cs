@@ -1,14 +1,17 @@
 using System.Diagnostics;
 using System.Drawing;
+using System.Formats.Tar;
 using System.Security.Authentication;
 using OpenTK.Mathematics;
 
 namespace ElectricData
 {
+
    public enum objectValues
    {
             Resistance,
-            Voltage
+            Voltage,
+            Current
     } 
     public abstract class UIElement
     {
@@ -16,6 +19,7 @@ namespace ElectricData
         public List<int> frames {get; set;}
         public int imageLink {get;set;}
         public int iterator {get;set;}
+        public bool isTop{get;set;}
 
     }
     public class ButtonCreateElement : UIElement
@@ -30,6 +34,16 @@ namespace ElectricData
             frames = l;
             imageLink = frames[0];
             iterator = 0;
+        }
+        public ButtonCreateElement (int a, List<int> l, bool isTop)
+        {
+           
+            elementID = 0;
+            whatElement = a;
+            frames = l;
+            imageLink = frames[0];
+            iterator = 0;
+            this.isTop = isTop;
         }
     }
     
@@ -104,6 +118,7 @@ namespace ElectricData
         public int objectID {get;set;}
         public float X { get; set; }
         public float Y { get; set; }
+        public bool isNull {get; set;}
 
         public float imageLink{ get; set; }
     }
@@ -117,9 +132,15 @@ namespace ElectricData
             Y = y;
             imageLink = 97;
             objectValues_list = new List<Tuple<objectValues, double>>();
-            objectValues_list.Add(new Tuple<objectValues, double>(objectValues.Resistance,0));
-            objectValues_list.Add(new Tuple<objectValues, double>(objectValues.Voltage,23));
-
+            objectValues_list.Add(new Tuple<objectValues, double>(objectValues.Resistance,10));
+        }
+        public Resistor (float x, float y, List<Tuple<objectValues, double>> g)
+        {
+            objectName = "Resistor";
+            X = x;
+            Y = y;
+            imageLink = 97;
+            objectValues_list = g;
         }
     }
     public class Cell : ElectricObject
@@ -133,16 +154,34 @@ namespace ElectricData
             objectValues_list = new List<Tuple<objectValues, double>>();
             objectValues_list.Add(new Tuple<objectValues, double>(objectValues.Voltage,0));
         }
+        public Cell (float x, float y, List<Tuple<objectValues, double>> g)
+        {
+            objectName = "Cell";
+            X = x;
+            Y = y;
+            imageLink = 92;
+            objectValues_list = g;
+        }
     }
      public class ACSource : ElectricObject
     {
         public double voltage { get; set; }
         public ACSource (float x, float y)
         {
-            objectName = "ACsource";
+            objectName = "ACSource";
             X = x;
             Y = y;
             imageLink = 94;
+            objectValues_list = new List<Tuple<objectValues, double>>();
+            objectValues_list.Add(new Tuple<objectValues, double>(objectValues.Current,0));
+        }
+        public ACSource (float x, float y, List<Tuple<objectValues, double>> g)
+        {
+            objectName = "ACSource";
+            X = x;
+            Y = y;
+            imageLink = 94;
+            objectValues_list = g;
         }
     }
     public class Node : ElectricObject
